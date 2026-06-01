@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint
+        language: system
+        entry: pnpm exec eslint --fix --max-warnings=0
+        files: ^(eslint\.config\.js|prettier\.config\.mjs|vite\.config\.js|src/.*\.(jsx?))$
+        pass_filenames: true
+      - id: prettier
+        name: prettier
+        language: system
+        entry: pnpm exec prettier --write
+        files: ^(\.pre-commit-config\.yaml|package\.json|index\.html|prettier\.config\.mjs|eslint\.config\.js|vite\.config\.js|public/.*\.svg|src/.*\.(jsx?|css))$
+        pass_filenames: true
