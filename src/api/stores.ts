@@ -1,6 +1,23 @@
 import client from './client'
 
-export const installStore = (params) =>
+interface InstallParams {
+  shop: string | null
+  hmac: string | null
+  host: string | null
+  timestamp: string | null
+  session: string | null
+}
+
+interface ConnectParams {
+  shop: string | null
+  code: string | null
+  hmac: string | null
+  host: string | null
+  state: string | null
+  timestamp: string | null
+}
+
+export const installStore = (params: InstallParams) =>
   client.get('/stores/install/', {
     params: {
       shop: params.shop,
@@ -11,7 +28,7 @@ export const installStore = (params) =>
     },
   })
 
-export const connectStore = (params) =>
+export const connectStore = (params: ConnectParams) =>
   client.post('/stores/', {
     shop: params.shop,
     code: params.code,

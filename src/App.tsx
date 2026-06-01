@@ -1,19 +1,19 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
-import Layout from './components/Layout';
-import RegisterPage from './pages/RegisterPage';
-import LoginPage from './pages/LoginPage';
-import ShopifyInstallPage from './pages/ShopifyInstallPage';
-import ShopifyCallbackPage from './pages/ShopifyCallbackPage';
-import HomePage from './pages/HomePage';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
+import { AuthProvider } from './contexts/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
+import Layout from './components/Layout'
+import RegisterPage from './pages/RegisterPage'
+import LoginPage from './pages/LoginPage'
+import ShopifyInstallPage from './pages/ShopifyInstallPage'
+import ShopifyCallbackPage from './pages/ShopifyCallbackPage'
+import HomePage from './pages/HomePage'
 
 const theme = createTheme({
   palette: {
     primary: { main: '#5C6BC0' },
   },
-});
+})
 
 const App = () => (
   <ThemeProvider theme={theme}>
@@ -54,6 +54,6 @@ const App = () => (
       </BrowserRouter>
     </AuthProvider>
   </ThemeProvider>
-);
+)
 
-export default App;
+export default App

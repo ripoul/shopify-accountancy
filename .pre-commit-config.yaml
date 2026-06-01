@@ -6,6 +6,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-json
+        exclude: ^tsconfig\.(app|node)\.json$
       - id: check-added-large-files
   - repo: local
     hooks:
@@ -13,11 +14,11 @@ repos:
         name: eslint
         language: system
         entry: pnpm exec eslint --fix --max-warnings=0
-        files: ^(eslint\.config\.js|prettier\.config\.mjs|vite\.config\.js|src/.*\.(jsx?))$
+        files: ^(eslint\.config\.js|prettier\.config\.mjs|vite\.config\.ts|src/.*\.(tsx?))$
         pass_filenames: true
       - id: prettier
         name: prettier
         language: system
         entry: pnpm exec prettier --write
-        files: ^(\.pre-commit-config\.yaml|package\.json|index\.html|prettier\.config\.mjs|eslint\.config\.js|vite\.config\.js|public/.*\.svg|src/.*\.(jsx?|css))$
+        files: ^(\.pre-commit-config\.yaml|package\.json|tsconfig.*\.json|index\.html|prettier\.config\.mjs|eslint\.config\.js|vite\.config\.ts|public/.*\.svg|src/.*\.(tsx?|css))$
         pass_filenames: true

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import { useState } from 'react'
+import { Link as RouterLink, useNavigate } from 'react-router-dom'
 import {
   Box,
   Button,
@@ -9,47 +9,62 @@ import {
   Typography,
   Alert,
   Paper,
-} from '@mui/material';
-import { register } from '../api/auth';
+} from '@mui/material'
+import { register } from '../api/auth'
+
+interface RegisterForm {
+  firstName: string
+  lastName: string
+  email: string
+  password: string
+}
 
 const RegisterPage = () => {
-  const navigate = useNavigate();
-  const [form, setForm] = useState({
+  const navigate = useNavigate()
+  const [form, setForm] = useState<RegisterForm>({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  })
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
     try {
-      await register(form);
-      navigate('/login', { state: { registered: true } });
+      await register(form)
+      navigate('/login', { state: { registered: true } })
     } catch (err) {
-      const data = err.response?.data;
+      const data = (err as { response?: { data?: Record<string, unknown> } })
+        .response?.data
       if (data) {
-        const messages = Object.values(data).flat().join(' ');
-        setError(messages);
+        const messages = Object.values(data).flat().join(' ')
+        setError(messages)
       } else {
-        setError('Une erreur est survenue.');
+        setError('Une erreur est survenue.')
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mt: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
             Créer un compte
@@ -110,7 +125,7 @@ const RegisterPage = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Création en cours…' : "Créer mon compte"}
+              {loading ? 'Création en cours…' : 'Créer mon compte'}
             </Button>
           </Box>
 
@@ -123,7 +138,7 @@ const RegisterPage = () => {
         </Paper>
       </Box>
     </Container>
-  );
-};
+  )
+}
 
-export default RegisterPage;
+export default RegisterPage

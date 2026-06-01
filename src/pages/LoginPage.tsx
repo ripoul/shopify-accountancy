@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react'
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom'
 import {
   Box,
   Button,
@@ -9,58 +9,67 @@ import {
   Typography,
   Alert,
   Paper,
-} from '@mui/material';
-import { useAuth } from '../contexts/useAuth';
+} from '@mui/material'
+import { useAuth } from '../contexts/useAuth'
 
-const SHOPIFY_PENDING_KEY = 'shopify_pending_params';
+const SHOPIFY_PENDING_KEY = 'shopify_pending_params'
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { login } = useAuth()
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const registeredSuccess = location.state?.registered;
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const registeredSuccess = (location.state as { registered?: boolean } | null)
+    ?.registered
 
   useEffect(() => {
-    if (location.state?.registered) {
-      window.history.replaceState({}, '');
+    if ((location.state as { registered?: boolean } | null)?.registered) {
+      window.history.replaceState({}, '')
     }
-  }, [location.state]);
+  }, [location.state])
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
 
     try {
-      await login(email, password);
+      await login(email, password)
 
-      const pendingRedirect = sessionStorage.getItem(SHOPIFY_PENDING_KEY);
+      const pendingRedirect = sessionStorage.getItem(SHOPIFY_PENDING_KEY)
       if (pendingRedirect) {
-        sessionStorage.removeItem(SHOPIFY_PENDING_KEY);
-        navigate(pendingRedirect, { replace: true });
+        sessionStorage.removeItem(SHOPIFY_PENDING_KEY)
+        navigate(pendingRedirect, { replace: true })
       } else {
-        navigate('/', { replace: true });
+        navigate('/', { replace: true })
       }
     } catch (err) {
-      const data = err.response?.data;
+      const data = (err as { response?: { data?: { detail?: string } } })
+        .response?.data
       if (data?.detail) {
-        setError(data.detail);
+        setError(data.detail)
       } else {
-        setError('Email ou mot de passe incorrect.');
+        setError('Email ou mot de passe incorrect.')
       }
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <Container maxWidth="sm">
-      <Box sx={{ mt: 8, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <Box
+        sx={{
+          mt: 8,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+        }}
+      >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
             Connexion
@@ -83,7 +92,9 @@ const LoginPage = () => {
               label="Email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setEmail(e.target.value)
+              }
               fullWidth
               margin="normal"
               required
@@ -93,7 +104,9 @@ const LoginPage = () => {
               label="Mot de passe"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setPassword(e.target.value)
+              }
               fullWidth
               margin="normal"
               required
@@ -119,7 +132,7 @@ const LoginPage = () => {
         </Paper>
       </Box>
     </Container>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

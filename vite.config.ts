@@ -6,17 +6,17 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    setupFiles: ['./src/test-setup.js'],
+    setupFiles: ['./src/test-setup.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
       exclude: [
-        'src/main.jsx',
-        'src/App.jsx',
+        'src/main.tsx',
+        'src/App.tsx',
         'node_modules/',
         'dist/',
         '**/*.test.*',
-        'src/test-setup.js',
+        'src/test-setup.ts',
       ],
       thresholds: {
         lines: 80,

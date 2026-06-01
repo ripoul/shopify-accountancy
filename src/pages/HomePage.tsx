@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import {
   Box,
   CircularProgress,
@@ -9,11 +9,22 @@ import {
   CardContent,
   Grid,
   Chip,
-} from '@mui/material';
-import { StorefrontRounded } from '@mui/icons-material';
-import { listStores } from '../api/stores';
+} from '@mui/material'
+import { StorefrontRounded } from '@mui/icons-material'
+import { listStores } from '../api/stores'
 
-const StoreCard = ({ store }) => (
+interface Store {
+  id: number
+  name: string
+  shop_domain: string
+  scopes?: string
+}
+
+interface StoreCardProps {
+  store: Store
+}
+
+const StoreCard = ({ store }: StoreCardProps) => (
   <Card variant="outlined">
     <CardContent>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -28,32 +39,37 @@ const StoreCard = ({ store }) => (
       {store.scopes && (
         <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
           {store.scopes.split(',').map((scope) => (
-            <Chip key={scope.trim()} label={scope.trim()} size="small" variant="outlined" />
+            <Chip
+              key={scope.trim()}
+              label={scope.trim()}
+              size="small"
+              variant="outlined"
+            />
           ))}
         </Box>
       )}
     </CardContent>
   </Card>
-);
+)
 
 const HomePage = () => {
-  const [stores, setStores] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [stores, setStores] = useState<Store[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const response = await listStores();
-        setStores(response.data.results);
+        const response = await listStores()
+        setStores(response.data.results as Store[])
       } catch {
-        setError('Impossible de charger les boutiques.');
+        setError('Impossible de charger les boutiques.')
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    fetchStores();
-  }, []);
+    }
+    fetchStores()
+  }, [])
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
@@ -89,7 +105,7 @@ const HomePage = () => {
         </Grid>
       )}
     </Container>
-  );
-};
+  )
+}
 
-export default HomePage;
+export default HomePage

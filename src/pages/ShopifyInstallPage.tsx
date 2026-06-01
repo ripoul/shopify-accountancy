@@ -16,18 +16,21 @@ const REQUIRED_PARAMS = ['shop', 'hmac', 'timestamp']
 const ShopifyInstallPage = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+
+  const shop = searchParams.get('shop')
+  const hmac = searchParams.get('hmac')
+  const host = searchParams.get('host')
+  const timestamp = searchParams.get('timestamp')
+  const session = searchParams.get('session')
+
   const params = useMemo(
-    () => ({
-      shop: searchParams.get('shop'),
-      hmac: searchParams.get('hmac'),
-      host: searchParams.get('host'),
-      timestamp: searchParams.get('timestamp'),
-      session: searchParams.get('session'),
-    }),
-    [searchParams],
+    () => ({ shop, hmac, host, timestamp, session }),
+    [shop, hmac, host, timestamp, session],
   )
-  const hasMissingParams = REQUIRED_PARAMS.some((k) => !params[k])
-  const [status, setStatus] = useState('loading')
+  const hasMissingParams = REQUIRED_PARAMS.some(
+    (k) => !params[k as keyof typeof params],
+  )
+  const [status, setStatus] = useState<'loading' | 'error'>('loading')
   const [errorMessage, setErrorMessage] = useState('')
   const visibleStatus = hasMissingParams ? 'missing_params' : status
 
@@ -39,9 +42,12 @@ const ShopifyInstallPage = () => {
     const run = async () => {
       try {
         const res = await installStore(params)
-        window.location.href = res.data.authorization_url
+        window.location.href = (
+          res.data as { authorization_url: string }
+        ).authorization_url
       } catch (err) {
-        const data = err.response?.data
+        const data = (err as { response?: { data?: Record<string, unknown> } })
+          .response?.data
         if (data) {
           const messages = Object.values(data).flat().join(' ')
           setErrorMessage(messages || 'Une erreur est survenue.')
