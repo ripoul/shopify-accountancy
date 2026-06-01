@@ -22,6 +22,7 @@ const ShopifyInstallPage = () => {
       hmac: searchParams.get('hmac'),
       host: searchParams.get('host'),
       timestamp: searchParams.get('timestamp'),
+      session: searchParams.get('session'),
     }),
     [searchParams]
   );

@@ -7,6 +7,7 @@ export const installStore = (params) =>
       hmac: params.hmac,
       host: params.host,
       timestamp: params.timestamp,
+      session: params.session,
     },
   });
 
