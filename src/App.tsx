@@ -3,11 +3,20 @@ import { CssBaseline, ThemeProvider, createTheme } from '@mui/material'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Layout from './components/Layout'
+import StoreLayout from './components/StoreLayout'
 import RegisterPage from './pages/RegisterPage'
 import LoginPage from './pages/LoginPage'
 import ShopifyInstallPage from './pages/ShopifyInstallPage'
 import ShopifyCallbackPage from './pages/ShopifyCallbackPage'
 import HomePage from './pages/HomePage'
+import StatsCurrentQuarterPage from './pages/store/StatsCurrentQuarterPage'
+import StatsAllTimePage from './pages/store/StatsAllTimePage'
+import StatsProductsPage from './pages/store/StatsProductsPage'
+import ConfigProductsPage from './pages/store/ConfigProductsPage'
+import ConfigAchatPage from './pages/store/ConfigAchatPage'
+import ConfigCaissePage from './pages/store/ConfigCaissePage'
+import ConfigMouvementsDiversPage from './pages/store/ConfigMouvementsDiversPage'
+import ConfigRedevancePage from './pages/store/ConfigRedevancePage'
 
 const theme = createTheme({
   palette: {
@@ -20,8 +29,8 @@ const App = () => (
     <CssBaseline />
     <AuthProvider>
       <BrowserRouter>
-        <Layout>
-          <Routes>
+        <Routes>
+          <Route element={<Layout />}>
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route
@@ -48,9 +57,38 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
+          </Route>
+
+          <Route
+            path="/store/:id"
+            element={
+              <ProtectedRoute>
+                <StoreLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route
+              index
+              element={<Navigate to="stats/trimestre-actuel" replace />}
+            />
+            <Route
+              path="stats/trimestre-actuel"
+              element={<StatsCurrentQuarterPage />}
+            />
+            <Route path="stats/all-time" element={<StatsAllTimePage />} />
+            <Route path="stats/products" element={<StatsProductsPage />} />
+            <Route path="config/products" element={<ConfigProductsPage />} />
+            <Route path="config/achat" element={<ConfigAchatPage />} />
+            <Route path="config/caisse" element={<ConfigCaissePage />} />
+            <Route
+              path="config/mouvements-divers"
+              element={<ConfigMouvementsDiversPage />}
+            />
+            <Route path="config/redevance" element={<ConfigRedevancePage />} />
+          </Route>
+
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </BrowserRouter>
     </AuthProvider>
   </ThemeProvider>

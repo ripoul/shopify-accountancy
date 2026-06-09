@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Link as RouterLink } from 'react-router-dom'
 import {
   Box,
+  CardActionArea,
   CircularProgress,
   Container,
   Typography,
@@ -26,29 +28,31 @@ interface StoreCardProps {
 
 const StoreCard = ({ store }: StoreCardProps) => (
   <Card variant="outlined">
-    <CardContent>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-        <StorefrontRounded color="primary" />
-        <Typography variant="h6" fontWeight={600}>
-          {store.name}
-        </Typography>
-      </Box>
-      <Typography variant="body2" color="text.secondary" gutterBottom>
-        {store.shop_domain}
-      </Typography>
-      {store.scopes && (
-        <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-          {store.scopes.split(',').map((scope) => (
-            <Chip
-              key={scope.trim()}
-              label={scope.trim()}
-              size="small"
-              variant="outlined"
-            />
-          ))}
+    <CardActionArea component={RouterLink} to={`/store/${store.id}`}>
+      <CardContent>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <StorefrontRounded color="primary" />
+          <Typography variant="h6" fontWeight={600}>
+            {store.name}
+          </Typography>
         </Box>
-      )}
-    </CardContent>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          {store.shop_domain}
+        </Typography>
+        {store.scopes && (
+          <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {store.scopes.split(',').map((scope) => (
+              <Chip
+                key={scope.trim()}
+                label={scope.trim()}
+                size="small"
+                variant="outlined"
+              />
+            ))}
+          </Box>
+        )}
+      </CardContent>
+    </CardActionArea>
   </Card>
 )
 

@@ -101,6 +101,23 @@ describe('HomePage', () => {
     })
   })
 
+  it('store card links to /store/:id', async () => {
+    mockListStores.mockResolvedValue({
+      data: {
+        results: [
+          { id: 42, name: 'My Store', shop_domain: 'mystore.myshopify.com' },
+        ],
+      },
+    })
+    const { container } = render(
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>,
+    )
+    await waitFor(() => screen.getByText('My Store'))
+    expect(container.querySelector('a[href="/store/42"]')).toBeInTheDocument()
+  })
+
   it('renders multiple store cards', async () => {
     mockListStores.mockResolvedValue({
       data: {
