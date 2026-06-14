@@ -112,6 +112,20 @@ describe('ShopifyInstallPage', () => {
     expect(mockNavigate).toHaveBeenCalledWith('/')
   })
 
+  it('shows fallback message when response data has no messages', async () => {
+    mockInstallStore.mockRejectedValue({
+      response: { data: { errors: [] } },
+    })
+    render(
+      <MemoryRouter initialEntries={[WITH_PARAMS]}>
+        <ShopifyInstallPage />
+      </MemoryRouter>,
+    )
+    await waitFor(() => {
+      expect(screen.getByText(/une erreur est survenue/i)).toBeInTheDocument()
+    })
+  })
+
   it('navigates home when back button is clicked on missing params state', () => {
     render(
       <MemoryRouter initialEntries={['/shopify/install']}>

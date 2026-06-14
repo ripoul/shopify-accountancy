@@ -206,6 +206,60 @@ describe('ConfigProductsPage', () => {
     })
   })
 
+  it('loads all pages when products span multiple pages', async () => {
+    mockListProducts
+      .mockResolvedValueOnce({
+        data: { results: [mockProduct], next: '/page2' },
+      })
+      .mockResolvedValueOnce({ data: { results: [mockProduct2], next: null } })
+
+    renderPage()
+    await waitFor(() => {
+      expect(screen.getByText('T-Shirt Blue')).toBeInTheDocument()
+      expect(screen.getByText('Hoodie Red')).toBeInTheDocument()
+    })
+    expect(mockListProducts).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows error when reload after import fails', async () => {
+    mockImportProducts.mockResolvedValue({})
+    mockListProducts
+      .mockResolvedValueOnce({ data: { results: [mockProduct], next: null } })
+      .mockRejectedValueOnce(new Error('reload fail'))
+
+    renderPage()
+    await waitFor(() => screen.getByText('T-Shirt Blue'))
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /importer les produits/i }),
+    )
+    await waitFor(() => {
+      expect(
+        screen.getByText(/impossible de charger les produits/i),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('closes import success alert', async () => {
+    mockImportProducts.mockResolvedValue({})
+    mockListProducts
+      .mockResolvedValueOnce({ data: { results: [mockProduct], next: null } })
+      .mockResolvedValueOnce({ data: { results: [mockProduct], next: null } })
+
+    renderPage()
+    await waitFor(() => screen.getByText('T-Shirt Blue'))
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /importer les produits/i }),
+    )
+    await waitFor(() => screen.getByText(/import terminé/i))
+
+    fireEvent.click(within(screen.getByRole('alert')).getByRole('button'))
+    await waitFor(() =>
+      expect(screen.queryByText(/import terminé/i)).not.toBeInTheDocument(),
+    )
+  })
+
   // --- Filters ---
 
   it('filters products by name', async () => {
@@ -499,5 +553,57 @@ describe('ConfigProductsPage', () => {
       target: { value: 'Hoodie' },
     })
     expect(screen.getByText(/1 produit sur 2/)).toBeInTheDocument()
+  })
+
+  it('toggles sort back to ascending on second header click', async () => {
+    mockListProducts.mockResolvedValue({
+      data: { results: [mockProduct, mockProduct2], next: null },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('T-Shirt Blue'))
+    const sortBtn = screen.getByRole('button', { name: /titre/i })
+    fireEvent.click(sortBtn)
+    fireEvent.click(sortBtn)
+    const content = document.body.textContent ?? ''
+    expect(content.indexOf('Hoodie Red')).toBeLessThan(
+      content.indexOf('T-Shirt Blue'),
+    )
+  })
+
+  it('keeps other products unchanged when handleVariantSaved is called', async () => {
+    mockListProducts.mockResolvedValue({
+      data: { results: [mockProduct, mockProduct2], next: null },
+    })
+    mockUpdateVariant.mockResolvedValue({
+      data: { ...mockVariant, distributor_price: '9.99' },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('T-Shirt Blue'))
+    fireEvent.click(screen.getByText('T-Shirt Blue'))
+    const inputs = screen.getAllByPlaceholderText('—')
+    fireEvent.change(inputs[0], { target: { value: '9.99' } })
+    const saveButtons = screen.getAllByRole('button', {
+      name: /enregistrer le prix fournisseur/i,
+    })
+    fireEvent.click(saveButtons[0])
+    await waitFor(() => expect(mockUpdateVariant).toHaveBeenCalled())
+    expect(screen.getByText('Hoodie Red')).toBeInTheDocument()
+  })
+
+  it('does not set shop domain when store is not in the list', async () => {
+    mockListStores.mockResolvedValue({ data: { results: [] } })
+    renderPage()
+    await waitFor(() => screen.getByText('T-Shirt Blue'))
+  })
+
+  it('parseCollections returns empty array for null collections', async () => {
+    mockListProducts.mockResolvedValue({
+      data: {
+        results: [{ ...mockProduct, collections: null }],
+        next: null,
+      },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('T-Shirt Blue'))
   })
 })

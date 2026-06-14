@@ -25,36 +25,44 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material'
-import { AddRounded, EditRounded, SavingsRounded } from '@mui/icons-material'
 import {
-  createCashTransaction,
-  listCashTransactions,
-  updateCashTransaction,
+  AccountBalanceRounded,
+  AddRounded,
+  EditRounded,
+} from '@mui/icons-material'
+import {
+  createBankTransaction,
+  listBankTransactions,
+  updateBankTransaction,
 } from '../../api/transactions'
 import { listStores } from '../../api/stores'
 
-type CashTransactionSource = 'ORDER' | 'ADD_MONEY' | 'WITHDRAW_MONEY' | 'OTHER'
+type BankTransactionSource =
+  | 'ORDER'
+  | 'EMPTY_CASHBOX'
+  | 'FILL_CASHBOX'
+  | 'OTHER'
 
-type CashTxCreateSource = 'WITHDRAW_MONEY' | 'OTHER'
+type BankTxCreateSource = 'FILL_CASHBOX' | 'OTHER'
 
-interface CashTransaction {
+interface BankTransaction {
   id: number
   title: string
   date: string
   amount: string
-  source: CashTransactionSource
+  source: BankTransactionSource
   order: number | null
 }
 
-const SOURCE_LABELS: Record<CashTransactionSource, string> = {
+const SOURCE_LABELS: Record<BankTransactionSource, string> = {
   ORDER: 'Commande',
-  ADD_MONEY: "Ajout d'argent",
-  WITHDRAW_MONEY: "Retrait d'argent",
+  EMPTY_CASHBOX: 'Vidage caisse',
+  FILL_CASHBOX: 'Alimentation caisse',
   OTHER: 'Autre',
 }
 
-const CREATE_SOURCE_OPTIONS: { value: CashTxCreateSource; label: string }[] = [
-  { value: 'WITHDRAW_MONEY', label: "Retrait d'argent" },
+const CREATE_SOURCE_OPTIONS: { value: BankTxCreateSource; label: string }[] = [
+  { value: 'FILL_CASHBOX', label: 'Alimentation caisse' },
   { value: 'OTHER', label: 'Autre' },
 ]
 
@@ -69,7 +77,7 @@ interface TxFormDialogProps {
   open: boolean
   mode: 'create' | 'edit'
   storePk: string
-  transaction: CashTransaction | null
+  transaction: BankTransaction | null
   onClose: () => void
   onSaved: (message: string) => void
 }
@@ -85,7 +93,7 @@ const TxFormDialog = ({
   onSaved,
 }: TxFormDialogProps) => {
   const [createSource, setCreateSource] =
-    useState<CashTxCreateSource>('WITHDRAW_MONEY')
+    useState<BankTxCreateSource>('FILL_CASHBOX')
   const [form, setForm] = useState(() =>
     mode === 'edit' && transaction
       ? {
@@ -111,10 +119,10 @@ const TxFormDialog = ({
     setError('')
     try {
       if (mode === 'create') {
-        await createCashTransaction(storePk, { source: createSource, ...form })
+        await createBankTransaction(storePk, { source: createSource, ...form })
         onSaved('Transaction créée avec succès.')
       } else if (transaction) {
-        await updateCashTransaction(storePk, transaction.id, form)
+        await updateBankTransaction(storePk, transaction.id, form)
         onSaved('Transaction mise à jour.')
       }
     } catch {
@@ -140,7 +148,7 @@ const TxFormDialog = ({
               label="Source"
               value={createSource}
               onChange={(e) =>
-                setCreateSource(e.target.value as CashTxCreateSource)
+                setCreateSource(e.target.value as BankTxCreateSource)
               }
               fullWidth
             >
@@ -209,19 +217,19 @@ const TxFormDialog = ({
   )
 }
 
-const ConfigCaissePage = () => {
+const ConfigBankTransactionsPage = () => {
   const { id } = useParams()
-  const [transactions, setTransactions] = useState<CashTransaction[]>([])
+  const [transactions, setTransactions] = useState<BankTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState('')
   const [hasMore, setHasMore] = useState(false)
-  const [cashAmount, setCashAmount] = useState<string | null>(null)
+  const [bankAmount, setBankAmount] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [successMessage, setSuccessMessage] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create')
-  const [editingTx, setEditingTx] = useState<CashTransaction | null>(null)
+  const [editingTx, setEditingTx] = useState<BankTransaction | null>(null)
   const nextPageRef = useRef(2)
   const busyRef = useRef(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
@@ -230,9 +238,9 @@ const ConfigCaissePage = () => {
     listStores()
       .then((res) => {
         const store = (
-          res.data.results as { id: number; cash_amount?: string }[]
+          res.data.results as { id: number; bank_amount?: string }[]
         ).find((s) => s.id === Number(id))
-        if (store?.cash_amount != null) setCashAmount(store.cash_amount)
+        if (store?.bank_amount != null) setBankAmount(store.bank_amount)
       })
       .catch(() => {})
   }, [id])
@@ -248,13 +256,13 @@ const ConfigCaissePage = () => {
       setError('')
       setHasMore(false)
       try {
-        const res = await listCashTransactions(id, 1)
+        const res = await listBankTransactions(id, 1)
         if (cancelled) return
         setTransactions(res.data.results)
         setHasMore(!!res.data.next)
       } catch {
         if (cancelled) return
-        setError('Impossible de charger les transactions de caisse.')
+        setError('Impossible de charger les transactions bancaires.')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -275,7 +283,7 @@ const ConfigCaissePage = () => {
         setLoadingMore(true)
         try {
           const page = nextPageRef.current
-          const res = await listCashTransactions(id!, page)
+          const res = await listBankTransactions(id!, page)
           setTransactions((prev) => [...prev, ...res.data.results])
           setHasMore(!!res.data.next)
           nextPageRef.current = page + 1
@@ -298,7 +306,7 @@ const ConfigCaissePage = () => {
     setDialogOpen(true)
   }
 
-  const openEdit = (tx: CashTransaction) => {
+  const openEdit = (tx: BankTransaction) => {
     setDialogMode('edit')
     setEditingTx(tx)
     setDialogOpen(true)
@@ -321,13 +329,13 @@ const ConfigCaissePage = () => {
         }}
       >
         <Typography variant="h5" fontWeight={700}>
-          Config — Caisse
+          Config — Bank Transactions
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {cashAmount != null && (
+          {bankAmount != null && (
             <Chip
-              icon={<SavingsRounded />}
-              label={`Solde caisse : ${parseFloat(cashAmount).toFixed(2)} €`}
+              icon={<AccountBalanceRounded />}
+              label={`Solde bancaire : ${parseFloat(bankAmount).toFixed(2)} €`}
               color="primary"
               variant="outlined"
             />
@@ -386,7 +394,7 @@ const ConfigCaissePage = () => {
                       align="center"
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
-                      Aucune transaction de caisse.
+                      Aucune transaction bancaire.
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -468,4 +476,4 @@ const ConfigCaissePage = () => {
   )
 }
 
-export default ConfigCaissePage
+export default ConfigBankTransactionsPage

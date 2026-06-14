@@ -20,4 +20,13 @@ describe('Layout', () => {
     expect(screen.getByText('Child Content')).toBeInTheDocument()
     expect(screen.getByText('Shopify Accountancy')).toBeInTheDocument()
   })
+
+  it('renders Outlet when no children are provided', () => {
+    render(
+      <MemoryRouter>
+        <Layout />
+      </MemoryRouter>,
+    )
+    expect(screen.getByText('Shopify Accountancy')).toBeInTheDocument()
+  })
 })
