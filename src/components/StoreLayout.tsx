@@ -58,11 +58,12 @@ const StoreLayout = () => {
   const configItems = [
     { label: 'Products', path: `/store/${id}/config/products` },
     { label: 'Achat', path: `/store/${id}/config/achat` },
-    { label: 'Caisse', path: `/store/${id}/config/caisse` },
+    { label: 'Commandes', path: `/store/${id}/config/commandes` },
     {
-      label: 'Mouvements divers',
-      path: `/store/${id}/config/mouvements-divers`,
+      label: 'Bank Transactions',
+      path: `/store/${id}/config/bank-transactions`,
     },
+    { label: 'Caisse', path: `/store/${id}/config/caisse` },
     { label: 'Redevance', path: `/store/${id}/config/redevance` },
   ]
 

@@ -117,5 +117,70 @@ describe('api/client interceptors', () => {
       expect(localStorage.getItem('refresh_token')).toBeNull()
       expect(window.location.href).toBe('/login')
     })
+
+    it('queues a second 401 while refresh is in progress and resolves both', async () => {
+      localStorage.setItem('refresh_token', 'ref-tok')
+
+      let resolvePost!: (value: unknown) => void
+      mockAxiosPost.mockReturnValueOnce(
+        new Promise((res) => {
+          resolvePost = res
+        }),
+      )
+      mockClientInstance.mockResolvedValue({ data: 'retried' })
+
+      const err1 = {
+        response: { status: 401 },
+        config: { _retry: false, headers: {} },
+      }
+      const err2 = {
+        response: { status: 401 },
+        config: { _retry: false, headers: {} },
+      }
+
+      const promise1 = responseError(err1)
+      const promise2 = responseError(err2)
+
+      resolvePost({ data: { access: 'new-access' } })
+
+      const [r1, r2] = await Promise.all([promise1, promise2])
+      expect(r1).toEqual({ data: 'retried' })
+      expect(r2).toEqual({ data: 'retried' })
+    })
+
+    it('rejects queued requests when refresh fails', async () => {
+      localStorage.setItem('refresh_token', 'ref-tok')
+
+      let rejectPost!: (reason: unknown) => void
+      mockAxiosPost.mockReturnValueOnce(
+        new Promise((_, rej) => {
+          rejectPost = rej
+        }),
+      )
+
+      Object.defineProperty(window, 'location', {
+        value: { href: '' },
+        writable: true,
+        configurable: true,
+      })
+
+      const refreshErr = new Error('network fail')
+      const err1 = {
+        response: { status: 401 },
+        config: { _retry: false, headers: {} },
+      }
+      const err2 = {
+        response: { status: 401 },
+        config: { _retry: false, headers: {} },
+      }
+
+      const promise1 = responseError(err1)
+      const promise2 = responseError(err2)
+
+      rejectPost(refreshErr)
+
+      await expect(promise1).rejects.toBe(refreshErr)
+      await expect(promise2).rejects.toBe(refreshErr)
+    })
   })
 })

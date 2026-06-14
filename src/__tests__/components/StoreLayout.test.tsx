@@ -108,11 +108,15 @@ describe('StoreLayout', () => {
     renderLayout()
     fireEvent.click(screen.getByText('Config'))
     expect(screen.getByRole('link', { name: 'Achat' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Caisse' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Commandes' })).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Mouvements divers' }),
+      screen.getByRole('link', { name: 'Bank Transactions' }),
     ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Caisse' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Redevance' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Mouvements divers' }),
+    ).not.toBeInTheDocument()
   })
 
   it('Config sub-items link to correct store paths', () => {

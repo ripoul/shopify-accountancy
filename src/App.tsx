@@ -14,8 +14,9 @@ import StatsAllTimePage from './pages/store/StatsAllTimePage'
 import StatsProductsPage from './pages/store/StatsProductsPage'
 import ConfigProductsPage from './pages/store/ConfigProductsPage'
 import ConfigAchatPage from './pages/store/ConfigAchatPage'
+import ConfigOrdersPage from './pages/store/ConfigOrdersPage'
+import ConfigBankTransactionsPage from './pages/store/ConfigBankTransactionsPage'
 import ConfigCaissePage from './pages/store/ConfigCaissePage'
-import ConfigMouvementsDiversPage from './pages/store/ConfigMouvementsDiversPage'
 import ConfigRedevancePage from './pages/store/ConfigRedevancePage'
 
 const theme = createTheme({
@@ -79,11 +80,12 @@ const App = () => (
             <Route path="stats/products" element={<StatsProductsPage />} />
             <Route path="config/products" element={<ConfigProductsPage />} />
             <Route path="config/achat" element={<ConfigAchatPage />} />
-            <Route path="config/caisse" element={<ConfigCaissePage />} />
+            <Route path="config/commandes" element={<ConfigOrdersPage />} />
             <Route
-              path="config/mouvements-divers"
-              element={<ConfigMouvementsDiversPage />}
+              path="config/bank-transactions"
+              element={<ConfigBankTransactionsPage />}
             />
+            <Route path="config/caisse" element={<ConfigCaissePage />} />
             <Route path="config/redevance" element={<ConfigRedevancePage />} />
           </Route>
 
