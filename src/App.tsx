@@ -18,6 +18,7 @@ import ConfigOrdersPage from './pages/store/ConfigOrdersPage'
 import ConfigBankTransactionsPage from './pages/store/ConfigBankTransactionsPage'
 import ConfigCaissePage from './pages/store/ConfigCaissePage'
 import ConfigRedevancePage from './pages/store/ConfigRedevancePage'
+import ConfigImpotsPage from './pages/store/ConfigImpotsPage'
 
 const theme = createTheme({
   palette: {
@@ -87,6 +88,7 @@ const App = () => (
             />
             <Route path="config/caisse" element={<ConfigCaissePage />} />
             <Route path="config/redevance" element={<ConfigRedevancePage />} />
+            <Route path="config/impots" element={<ConfigImpotsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
