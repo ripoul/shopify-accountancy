@@ -65,6 +65,7 @@ const StoreLayout = () => {
     },
     { label: 'Caisse', path: `/store/${id}/config/caisse` },
     { label: 'Redevance', path: `/store/${id}/config/redevance` },
+    { label: 'Impôts', path: `/store/${id}/config/impots` },
   ]
 
   return (
