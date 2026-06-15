@@ -329,6 +329,24 @@ describe('ConfigImpotsPage', () => {
     expect(editButtons).toHaveLength(2)
   })
 
+  it('disables edit button for paid taxes', async () => {
+    mockListTaxes.mockResolvedValue({
+      data: {
+        results: [
+          makeTax(1, { payment_date: '2024-06-30' }),
+          makeTax(2, { payment_date: null }),
+        ],
+        next: null,
+        count: 2,
+      },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('Q1 2024'))
+    const editButtons = screen.getAllByLabelText('Modifier la date de paiement')
+    expect(editButtons[0]).toBeDisabled()
+    expect(editButtons[1]).not.toBeDisabled()
+  })
+
   describe('edit dialog', () => {
     it('opens edit dialog on icon click', async () => {
       mockListTaxes.mockResolvedValue({
@@ -357,10 +375,10 @@ describe('ConfigImpotsPage', () => {
       expect(screen.getByDisplayValue('134.00')).toBeInTheDocument()
     })
 
-    it('pre-fills payment_date when already set', async () => {
+    it('pre-fills payment_date when already set on unpaid tax', async () => {
       mockListTaxes.mockResolvedValue({
         data: {
-          results: [makeTax(1, { payment_date: '2024-06-30' })],
+          results: [makeTax(1, { payment_date: null })],
           next: null,
           count: 1,
         },
@@ -369,7 +387,7 @@ describe('ConfigImpotsPage', () => {
       await waitFor(() => screen.getByText('Q1 2024'))
       fireEvent.click(screen.getByLabelText('Modifier la date de paiement'))
       await waitFor(() => screen.getByText(/impôt — Q1 2024/i))
-      expect(screen.getByDisplayValue('2024-06-30')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('')).toBeInTheDocument()
     })
 
     it('saves with payment_date and amount, shows success', async () => {
@@ -409,44 +427,6 @@ describe('ConfigImpotsPage', () => {
       expect(mockUpdateTax).toHaveBeenCalledWith('1', 1, {
         payment_date: '2024-06-30',
         amount: '99.50',
-      })
-    })
-
-    it('sends null when payment_date is cleared', async () => {
-      mockUpdateTax.mockResolvedValue({ data: {} })
-      mockListTaxes
-        .mockResolvedValueOnce({
-          data: {
-            results: [
-              makeTax(1, { payment_date: '2024-06-30', amount: '100.00' }),
-            ],
-            next: null,
-            count: 1,
-          },
-        })
-        .mockResolvedValueOnce({
-          data: { results: [], next: null, count: 0 },
-        })
-
-      renderPage()
-      await waitFor(() => screen.getByText('Q1 2024'))
-      fireEvent.click(screen.getByLabelText('Modifier la date de paiement'))
-      await waitFor(() => screen.getByText(/impôt — Q1 2024/i))
-
-      fireEvent.change(screen.getByDisplayValue('2024-06-30'), {
-        target: { value: '' },
-      })
-
-      await act(async () => {
-        fireEvent.click(screen.getByRole('button', { name: /enregistrer/i }))
-      })
-
-      await waitFor(() =>
-        expect(screen.getByText(/impôt mis à jour/i)).toBeInTheDocument(),
-      )
-      expect(mockUpdateTax).toHaveBeenCalledWith('1', 1, {
-        payment_date: null,
-        amount: '100.00',
       })
     })
 

@@ -287,14 +287,23 @@ const ConfigImpotsPage = () => {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="Modifier">
-                          <IconButton
-                            size="small"
-                            onClick={() => setEditingTax(tax)}
-                            aria-label="Modifier la date de paiement"
-                          >
-                            <EditRounded fontSize="small" />
-                          </IconButton>
+                        <Tooltip
+                          title={
+                            tax.payment_date
+                              ? 'Impôt déjà payé — non modifiable'
+                              : 'Modifier'
+                          }
+                        >
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => setEditingTax(tax)}
+                              aria-label="Modifier la date de paiement"
+                              disabled={!!tax.payment_date}
+                            >
+                              <EditRounded fontSize="small" />
+                            </IconButton>
+                          </span>
                         </Tooltip>
                       </TableCell>
                     </TableRow>
