@@ -10,6 +10,7 @@ import {
   listStores,
   getStore,
   updateStore,
+  getCurrentQuarterStats,
 } from '../../api/stores'
 import client from '../../api/client'
 
@@ -63,5 +64,10 @@ describe('api/stores', () => {
     expect(client.patch).toHaveBeenCalledWith('/stores/5/', {
       royalty_rate: '7.50',
     })
+  })
+
+  it('getCurrentQuarterStats calls GET /stores/{id}/stats/current-quarter/', () => {
+    getCurrentQuarterStats('42')
+    expect(client.get).toHaveBeenCalledWith('/stores/42/stats/current-quarter/')
   })
 })
