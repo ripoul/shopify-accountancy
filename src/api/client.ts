@@ -73,8 +73,12 @@ client.interceptors.response.use(
         `${import.meta.env.VITE_API_BASE_URL}/auth/token/refresh/`,
         { refresh: refreshToken },
       )
-      const { access } = response.data as { access: string }
+      const { access, refresh } = response.data as {
+        access: string
+        refresh: string
+      }
       localStorage.setItem('access_token', access)
+      localStorage.setItem('refresh_token', refresh)
       client.defaults.headers.common.Authorization = `Bearer ${access}`
       processQueue(null, access)
       originalRequest.headers.Authorization = `Bearer ${access}`
