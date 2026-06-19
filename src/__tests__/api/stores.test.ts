@@ -1,10 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../api/client', () => ({
-  default: { get: vi.fn(), post: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
 }))
 
-import { installStore, connectStore, listStores } from '../../api/stores'
+import {
+  installStore,
+  connectStore,
+  listStores,
+  getStore,
+  updateStore,
+} from '../../api/stores'
 import client from '../../api/client'
 
 describe('api/stores', () => {
@@ -45,5 +51,17 @@ describe('api/stores', () => {
   it('listStores calls GET /stores/ with specified page', () => {
     listStores(3)
     expect(client.get).toHaveBeenCalledWith('/stores/', { params: { page: 3 } })
+  })
+
+  it('getStore calls GET /stores/{id}/', () => {
+    getStore('5')
+    expect(client.get).toHaveBeenCalledWith('/stores/5/')
+  })
+
+  it('updateStore calls PATCH /stores/{id}/ with royalty_rate', () => {
+    updateStore('5', { royalty_rate: '7.50' })
+    expect(client.patch).toHaveBeenCalledWith('/stores/5/', {
+      royalty_rate: '7.50',
+    })
   })
 })

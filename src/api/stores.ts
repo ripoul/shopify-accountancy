@@ -40,3 +40,8 @@ export const connectStore = (params: ConnectParams) =>
 
 export const listStores = (page = 1) =>
   client.get('/stores/', { params: { page } })
+
+export const getStore = (storeId: string) => client.get(`/stores/${storeId}/`)
+
+export const updateStore = (storeId: string, data: { royalty_rate: string }) =>
+  client.patch(`/stores/${storeId}/`, data)
