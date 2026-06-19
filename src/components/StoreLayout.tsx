@@ -31,6 +31,7 @@ import {
   StorefrontRounded,
 } from '@mui/icons-material'
 import { useAuth } from '../contexts/useAuth'
+import Footer from './Footer'
 
 const DRAWER_WIDTH = 240
 const DRAWER_MINI = 56
@@ -188,8 +189,14 @@ const StoreLayout = () => {
           </List>
         </Drawer>
 
-        <Box component="main" sx={{ flex: 1, p: 3 }}>
-          <Outlet />
+        <Box
+          component="main"
+          sx={{ flex: 1, p: 3, display: 'flex', flexDirection: 'column' }}
+        >
+          <Box sx={{ flex: 1 }}>
+            <Outlet />
+          </Box>
+          <Footer />
         </Box>
       </Box>
     </Box>

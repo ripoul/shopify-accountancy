@@ -1,4 +1,6 @@
+import { Box } from '@mui/material'
 import { Outlet } from 'react-router-dom'
+import Footer from './Footer'
 import Navbar from './Navbar'
 
 interface LayoutProps {
@@ -6,10 +8,11 @@ interface LayoutProps {
 }
 
 const Layout = ({ children }: LayoutProps) => (
-  <>
+  <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
     <Navbar />
-    {children ?? <Outlet />}
-  </>
+    <Box sx={{ flex: 1 }}>{children ?? <Outlet />}</Box>
+    <Footer />
+  </Box>
 )
 
 export default Layout
