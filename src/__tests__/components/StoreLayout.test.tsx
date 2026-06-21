@@ -79,7 +79,9 @@ describe('StoreLayout', () => {
     expect(
       screen.getByRole('link', { name: 'Trimestre actuel' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'All time' })).toBeInTheDocument()
+    expect(
+      screen.getByRole('link', { name: 'Évolution par trimestre' }),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Products' })).toBeInTheDocument()
   })
 
@@ -88,10 +90,9 @@ describe('StoreLayout', () => {
     expect(
       screen.getByRole('link', { name: 'Trimestre actuel' }),
     ).toHaveAttribute('href', '/store/1/stats/trimestre-actuel')
-    expect(screen.getByRole('link', { name: 'All time' })).toHaveAttribute(
-      'href',
-      '/store/1/stats/all-time',
-    )
+    expect(
+      screen.getByRole('link', { name: 'Évolution par trimestre' }),
+    ).toHaveAttribute('href', '/store/1/stats/all-time')
   })
 
   it('Config sub-items are hidden by default', () => {

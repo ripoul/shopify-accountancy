@@ -67,3 +67,21 @@ export const updateStore = (storeId: string, data: { royalty_rate: string }) =>
 
 export const getCurrentQuarterStats = (storeId: string) =>
   client.get<DashboardStats>(`/stores/${storeId}/stats/current-quarter/`)
+
+export interface QuarterHistoryItem {
+  period: string
+  start_date: string
+  end_date: string
+  revenue: string
+  profit_before_tax: string
+  profit_after_tax: string
+  profit_after_tax_after_purchase: string
+  cash_variation: string
+  order_count: number
+  average_profit_per_order: string
+  average_basket: string
+  is_current: boolean
+}
+
+export const getQuartersHistory = (storeId: string) =>
+  client.get<QuarterHistoryItem[]>(`/stores/${storeId}/stats/quarters-history/`)

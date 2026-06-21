@@ -52,7 +52,7 @@ const StoreLayout = () => {
 
   const statsItems = [
     { label: 'Trimestre actuel', path: `/store/${id}/stats/trimestre-actuel` },
-    { label: 'All time', path: `/store/${id}/stats/all-time` },
+    { label: 'Évolution par trimestre', path: `/store/${id}/stats/all-time` },
     { label: 'Products', path: `/store/${id}/stats/products` },
   ]
 

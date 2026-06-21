@@ -11,6 +11,7 @@ import {
   getStore,
   updateStore,
   getCurrentQuarterStats,
+  getQuartersHistory,
 } from '../../api/stores'
 import client from '../../api/client'
 
@@ -69,5 +70,12 @@ describe('api/stores', () => {
   it('getCurrentQuarterStats calls GET /stores/{id}/stats/current-quarter/', () => {
     getCurrentQuarterStats('42')
     expect(client.get).toHaveBeenCalledWith('/stores/42/stats/current-quarter/')
+  })
+
+  it('getQuartersHistory calls GET /stores/{id}/stats/quarters-history/', () => {
+    getQuartersHistory('42')
+    expect(client.get).toHaveBeenCalledWith(
+      '/stores/42/stats/quarters-history/',
+    )
   })
 })
