@@ -5,6 +5,7 @@ export interface QuarterStats {
   start_date: string
   end_date: string
   revenue: string
+  cash_variation: string
   profit_before_tax: string
   profit_after_tax: string
   profit_after_tax_after_purchase: string

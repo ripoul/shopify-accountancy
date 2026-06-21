@@ -19,6 +19,7 @@ const makeStats = (currentOverrides = {}, previousOverrides = {}) => ({
       start_date: '2026-04-01',
       end_date: '2026-06-19',
       revenue: '10000.00',
+      cash_variation: '1500.00',
       profit_before_tax: '3000.00',
       profit_after_tax: '2660.00',
       profit_after_tax_after_purchase: '2000.00',
@@ -32,6 +33,7 @@ const makeStats = (currentOverrides = {}, previousOverrides = {}) => ({
       start_date: '2026-01-01',
       end_date: '2026-03-19',
       revenue: '8000.00',
+      cash_variation: '1200.00',
       profit_before_tax: '2400.00',
       profit_after_tax: '2128.00',
       profit_after_tax_after_purchase: '1600.00',
@@ -94,11 +96,12 @@ describe('StatsCurrentQuarterPage', () => {
     })
   })
 
-  it('renders all 7 stat card labels', async () => {
+  it('renders all 8 stat card labels', async () => {
     mockGetStats.mockResolvedValue(makeStats())
     renderPage()
     await waitFor(() => {
       expect(screen.getByText("Chiffre d'affaires")).toBeInTheDocument()
+      expect(screen.getByText('Variation de trésorerie')).toBeInTheDocument()
       expect(screen.getByText('Marge avant impôts')).toBeInTheDocument()
       expect(screen.getByText('Résultat après impôts')).toBeInTheDocument()
       expect(
@@ -145,6 +148,7 @@ describe('StatsCurrentQuarterPage', () => {
         { order_count: 10 },
         {
           revenue: '0.00',
+          cash_variation: '0.00',
           profit_before_tax: '0.00',
           profit_after_tax: '0.00',
           profit_after_tax_after_purchase: '0.00',

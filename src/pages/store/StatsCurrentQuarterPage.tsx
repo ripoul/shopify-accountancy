@@ -122,6 +122,11 @@ const StatsCurrentQuarterPage = () => {
       diff: calcDiff(cq.revenue, pq.revenue),
     },
     {
+      label: 'Variation de trésorerie',
+      value: formatCurrency(cq.cash_variation),
+      diff: calcDiff(cq.cash_variation, pq.cash_variation),
+    },
+    {
       label: 'Marge avant impôts',
       value: formatCurrency(cq.profit_before_tax),
       diff: calcDiff(cq.profit_before_tax, pq.profit_before_tax),
