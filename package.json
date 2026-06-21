@@ -23,6 +23,11 @@
     "react-dom": "^19.2.6",
     "react-router-dom": "^7.15.1"
   },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "core-js-pure"
+    ]
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@rolldown/binding-darwin-arm64": "^1.0.3",
