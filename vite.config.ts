@@ -3,6 +3,13 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: [
+      '@mui/icons-material/ArrowDownwardRounded',
+      '@mui/icons-material/ArrowUpwardRounded',
+      '@mui/icons-material/SearchRounded',
+    ],
+  },
   test: {
     globals: true,
     environment: 'happy-dom',
