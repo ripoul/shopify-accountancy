@@ -14,6 +14,11 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./src/test-setup.ts'],
+    server: {
+      deps: {
+        inline: [/@mui\/material/, /react-transition-group/],
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
