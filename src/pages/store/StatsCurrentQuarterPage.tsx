@@ -6,6 +6,7 @@ import {
   CircularProgress,
   Grid,
   Paper,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import ArrowDownwardRounded from '@mui/icons-material/ArrowDownwardRounded'
@@ -17,6 +18,14 @@ const formatCurrency = (value: string) =>
     style: 'currency',
     currency: 'EUR',
     maximumFractionDigits: 0,
+  }).format(parseFloat(value))
+
+const formatCurrencyExact = (value: string) =>
+  new Intl.NumberFormat('fr-FR', {
+    style: 'currency',
+    currency: 'EUR',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(parseFloat(value))
 
 const calcDiff = (
@@ -33,9 +42,17 @@ interface StatCardProps {
   label: string
   value: string
   diff: number | null
+  exactCurrent: string
+  exactPrevious: string
 }
 
-const StatCard = ({ label, value, diff }: StatCardProps) => {
+const StatCard = ({
+  label,
+  value,
+  diff,
+  exactCurrent,
+  exactPrevious,
+}: StatCardProps) => {
   const isUp = diff !== null && diff > 0
   const isDown = diff !== null && diff < 0
   const trendColor = isUp
@@ -45,28 +62,45 @@ const StatCard = ({ label, value, diff }: StatCardProps) => {
       : 'text.secondary'
 
   return (
-    <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
-      <Typography variant="body2" color="text.secondary" gutterBottom>
-        {label}
-      </Typography>
-      <Typography variant="h4" fontWeight={700} sx={{ my: 1 }}>
-        {value}
-      </Typography>
-      {diff !== null && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {isUp && (
-            <ArrowUpwardRounded sx={{ color: 'success.main', fontSize: 20 }} />
-          )}
-          {isDown && (
-            <ArrowDownwardRounded sx={{ color: 'error.main', fontSize: 20 }} />
-          )}
-          <Typography variant="body2" fontWeight={600} color={trendColor}>
-            {diff > 0 ? '+' : ''}
-            {diff.toFixed(1)}%
+    <Tooltip
+      title={
+        <>
+          <Typography variant="caption" component="div">
+            Trimestre actuel : {exactCurrent}
           </Typography>
-        </Box>
-      )}
-    </Paper>
+          <Typography variant="caption" component="div">
+            Trimestre précédent : {exactPrevious}
+          </Typography>
+        </>
+      }
+    >
+      <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          {label}
+        </Typography>
+        <Typography variant="h4" fontWeight={700} sx={{ my: 1 }}>
+          {value}
+        </Typography>
+        {diff !== null && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {isUp && (
+              <ArrowUpwardRounded
+                sx={{ color: 'success.main', fontSize: 20 }}
+              />
+            )}
+            {isDown && (
+              <ArrowDownwardRounded
+                sx={{ color: 'error.main', fontSize: 20 }}
+              />
+            )}
+            <Typography variant="body2" fontWeight={600} color={trendColor}>
+              {diff > 0 ? '+' : ''}
+              {diff.toFixed(1)}%
+            </Typography>
+          </Box>
+        )}
+      </Paper>
+    </Tooltip>
   )
 }
 
@@ -115,50 +149,53 @@ const StatsCurrentQuarterPage = () => {
 
   const { current_quarter: cq, previous_quarter: pq } = data
 
+  const currencyStat = (
+    label: string,
+    current: string,
+    previous: string,
+  ): StatCardProps => ({
+    label,
+    value: formatCurrency(current),
+    diff: calcDiff(current, previous),
+    exactCurrent: formatCurrencyExact(current),
+    exactPrevious: formatCurrencyExact(previous),
+  })
+
   const cards: StatCardProps[] = [
-    {
-      label: "Chiffre d'affaires",
-      value: formatCurrency(cq.revenue),
-      diff: calcDiff(cq.revenue, pq.revenue),
-    },
-    {
-      label: 'Variation de trésorerie',
-      value: formatCurrency(cq.cash_variation),
-      diff: calcDiff(cq.cash_variation, pq.cash_variation),
-    },
-    {
-      label: 'Marge avant impôts',
-      value: formatCurrency(cq.profit_before_tax),
-      diff: calcDiff(cq.profit_before_tax, pq.profit_before_tax),
-    },
-    {
-      label: 'Résultat après impôts',
-      value: formatCurrency(cq.profit_after_tax),
-      diff: calcDiff(cq.profit_after_tax, pq.profit_after_tax),
-    },
-    {
-      label: 'Résultat après impôts et achats',
-      value: formatCurrency(cq.profit_after_tax_after_purchase),
-      diff: calcDiff(
-        cq.profit_after_tax_after_purchase,
-        pq.profit_after_tax_after_purchase,
-      ),
-    },
+    currencyStat("Chiffre d'affaires", cq.revenue, pq.revenue),
+    currencyStat(
+      'Variation de trésorerie',
+      cq.cash_variation,
+      pq.cash_variation,
+    ),
+    currencyStat(
+      'Marge avant impôts',
+      cq.profit_before_tax,
+      pq.profit_before_tax,
+    ),
+    currencyStat(
+      'Résultat après impôts',
+      cq.profit_after_tax,
+      pq.profit_after_tax,
+    ),
+    currencyStat(
+      'Résultat après impôts et achats',
+      cq.profit_after_tax_after_purchase,
+      pq.profit_after_tax_after_purchase,
+    ),
     {
       label: 'Nombre de commandes',
       value: String(cq.order_count),
       diff: calcDiff(cq.order_count, pq.order_count),
+      exactCurrent: String(cq.order_count),
+      exactPrevious: String(pq.order_count),
     },
-    {
-      label: 'Bénéfice moyen / commande',
-      value: formatCurrency(cq.average_profit_per_order),
-      diff: calcDiff(cq.average_profit_per_order, pq.average_profit_per_order),
-    },
-    {
-      label: 'Panier moyen',
-      value: formatCurrency(cq.average_basket),
-      diff: calcDiff(cq.average_basket, pq.average_basket),
-    },
+    currencyStat(
+      'Bénéfice moyen / commande',
+      cq.average_profit_per_order,
+      pq.average_profit_per_order,
+    ),
+    currencyStat('Panier moyen', cq.average_basket, pq.average_basket),
   ]
 
   return (

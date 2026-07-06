@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 vi.mock('../../../api/stores', () => ({
@@ -140,6 +141,44 @@ describe('StatsCurrentQuarterPage', () => {
     await waitFor(() => {
       expect(screen.getAllByText('-25.0%').length).toBeGreaterThan(0)
     })
+  })
+
+  it('shows exact current and previous quarter values in tooltip on hover', async () => {
+    mockGetStats.mockResolvedValue(
+      makeStats({ revenue: '10000.5' }, { revenue: '8000.25' }),
+    )
+    renderPage()
+    const user = userEvent.setup()
+    await waitFor(() => {
+      expect(screen.getByText("Chiffre d'affaires")).toBeInTheDocument()
+    })
+
+    await user.hover(screen.getByText("Chiffre d'affaires"))
+
+    expect(
+      await screen.findByText('Trimestre actuel : 10 000,50 €'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('Trimestre précédent : 8 000,25 €'),
+    ).toBeInTheDocument()
+  })
+
+  it('shows exact order counts in tooltip on hover', async () => {
+    mockGetStats.mockResolvedValue(
+      makeStats({ order_count: 100 }, { order_count: 80 }),
+    )
+    renderPage()
+    const user = userEvent.setup()
+    await waitFor(() => {
+      expect(screen.getByText('Nombre de commandes')).toBeInTheDocument()
+    })
+
+    await user.hover(screen.getByText('Nombre de commandes'))
+
+    expect(
+      await screen.findByText('Trimestre actuel : 100'),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Trimestre précédent : 80')).toBeInTheDocument()
   })
 
   it('shows no diff when all previous values are zero', async () => {
