@@ -18,7 +18,7 @@ import { useAuth } from '../../contexts/useAuth'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockUseAuth = useAuth as any
 
-const renderLayout = (path = '/store/1/stats/trimestre-actuel') =>
+const renderLayout = (path = '/store/1/stats/current-quarter') =>
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
@@ -89,7 +89,7 @@ describe('StoreLayout', () => {
     renderLayout()
     expect(
       screen.getByRole('link', { name: 'Trimestre actuel' }),
-    ).toHaveAttribute('href', '/store/1/stats/trimestre-actuel')
+    ).toHaveAttribute('href', '/store/1/stats/current-quarter')
     expect(
       screen.getByRole('link', { name: 'Évolution par trimestre' }),
     ).toHaveAttribute('href', '/store/1/stats/all-time')
@@ -125,11 +125,11 @@ describe('StoreLayout', () => {
     fireEvent.click(screen.getByText('Config'))
     expect(screen.getByRole('link', { name: 'Achat' })).toHaveAttribute(
       'href',
-      '/store/1/config/achat',
+      '/store/1/config/purchases',
     )
     expect(screen.getByRole('link', { name: 'Redevance' })).toHaveAttribute(
       'href',
-      '/store/1/config/redevance',
+      '/store/1/config/royalties',
     )
   })
 

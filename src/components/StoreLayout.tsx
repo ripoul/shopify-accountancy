@@ -51,22 +51,22 @@ const StoreLayout = () => {
   }
 
   const statsItems = [
-    { label: 'Trimestre actuel', path: `/store/${id}/stats/trimestre-actuel` },
+    { label: 'Trimestre actuel', path: `/store/${id}/stats/current-quarter` },
     { label: 'Évolution par trimestre', path: `/store/${id}/stats/all-time` },
     { label: 'Products', path: `/store/${id}/stats/products` },
   ]
 
   const configItems = [
     { label: 'Products', path: `/store/${id}/config/products` },
-    { label: 'Achat', path: `/store/${id}/config/achat` },
-    { label: 'Commandes', path: `/store/${id}/config/commandes` },
+    { label: 'Achat', path: `/store/${id}/config/purchases` },
+    { label: 'Commandes', path: `/store/${id}/config/orders` },
     {
       label: 'Bank Transactions',
       path: `/store/${id}/config/bank-transactions`,
     },
-    { label: 'Caisse', path: `/store/${id}/config/caisse` },
-    { label: 'Redevance', path: `/store/${id}/config/redevance` },
-    { label: 'Impôts', path: `/store/${id}/config/impots` },
+    { label: 'Caisse', path: `/store/${id}/config/cash` },
+    { label: 'Redevance', path: `/store/${id}/config/royalties` },
+    { label: 'Impôts', path: `/store/${id}/config/taxes` },
   ]
 
   return (

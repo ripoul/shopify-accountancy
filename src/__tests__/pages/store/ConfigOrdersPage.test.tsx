@@ -96,14 +96,11 @@ const makeExpense = (id: number, overrides = {}) => ({
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
-const renderPage = (initialPath = '/store/1/config/commandes') =>
+const renderPage = (initialPath = '/store/1/config/orders') =>
   render(
     <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
-        <Route
-          path="/store/:id/config/commandes"
-          element={<ConfigOrdersPage />}
-        />
+        <Route path="/store/:id/config/orders" element={<ConfigOrdersPage />} />
       </Routes>
     </MemoryRouter>,
   )
@@ -1130,7 +1127,7 @@ describe('ConfigOrdersPage', () => {
     mockListOrders.mockResolvedValue({
       data: { results: [makeOrder(1)], next: null, count: 1 },
     })
-    renderPage('/store/1/config/commandes?name=1001')
+    renderPage('/store/1/config/orders?name=1001')
     await waitFor(() =>
       expect(mockListOrders).toHaveBeenCalledWith(
         '1',
@@ -1241,7 +1238,7 @@ describe('ConfigOrdersPage', () => {
       data: { results: [makeOrder(1)], next: null, count: 1 },
     })
     renderPage(
-      '/store/1/config/commandes?processed_after=2024-01-01T00%3A00%3A00.000Z&processed_before=2024-02-01T00%3A00%3A00.000Z&ordering=-total_price',
+      '/store/1/config/orders?processed_after=2024-01-01T00%3A00%3A00.000Z&processed_before=2024-02-01T00%3A00%3A00.000Z&ordering=-total_price',
     )
     await waitFor(() =>
       expect(mockListOrders).toHaveBeenCalledWith('1', 1, {
@@ -1260,7 +1257,7 @@ describe('ConfigOrdersPage', () => {
       data: { results: [makeOrder(1)], next: null, count: 1 },
     })
     renderPage(
-      '/store/1/config/commandes?processed_after=2024-01-01T00%3A00%3A00.000Z',
+      '/store/1/config/orders?processed_after=2024-01-01T00%3A00%3A00.000Z',
     )
     await waitFor(() =>
       expect(mockListOrders).toHaveBeenCalledWith(

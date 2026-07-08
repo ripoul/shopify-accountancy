@@ -48,10 +48,10 @@ const makeStats = (currentOverrides = {}, previousOverrides = {}) => ({
 
 const renderPage = () =>
   render(
-    <MemoryRouter initialEntries={['/store/1/stats/trimestre-actuel']}>
+    <MemoryRouter initialEntries={['/store/1/stats/current-quarter']}>
       <Routes>
         <Route
-          path="/store/:id/stats/trimestre-actuel"
+          path="/store/:id/stats/current-quarter"
           element={<StatsCurrentQuarterPage />}
         />
       </Routes>

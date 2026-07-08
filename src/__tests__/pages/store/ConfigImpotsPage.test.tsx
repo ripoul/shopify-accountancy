@@ -33,9 +33,9 @@ const makeTax = (id: number, overrides = {}) => ({
 
 const renderPage = () =>
   render(
-    <MemoryRouter initialEntries={['/store/1/config/impots']}>
+    <MemoryRouter initialEntries={['/store/1/config/taxes']}>
       <Routes>
-        <Route path="/store/:id/config/impots" element={<ConfigImpotsPage />} />
+        <Route path="/store/:id/config/taxes" element={<ConfigImpotsPage />} />
       </Routes>
     </MemoryRouter>,
   )

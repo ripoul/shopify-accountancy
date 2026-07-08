@@ -61,9 +61,12 @@ const mockPurchase = {
 
 const renderPage = () =>
   render(
-    <MemoryRouter initialEntries={['/store/1/config/achat']}>
+    <MemoryRouter initialEntries={['/store/1/config/purchases']}>
       <Routes>
-        <Route path="/store/:id/config/achat" element={<ConfigAchatPage />} />
+        <Route
+          path="/store/:id/config/purchases"
+          element={<ConfigAchatPage />}
+        />
       </Routes>
     </MemoryRouter>,
   )

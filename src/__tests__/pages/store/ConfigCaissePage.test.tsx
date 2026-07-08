@@ -49,9 +49,9 @@ const makeTx = (id: number, overrides = {}) => ({
 
 const renderPage = () =>
   render(
-    <MemoryRouter initialEntries={['/store/1/config/caisse']}>
+    <MemoryRouter initialEntries={['/store/1/config/cash']}>
       <Routes>
-        <Route path="/store/:id/config/caisse" element={<ConfigCaissePage />} />
+        <Route path="/store/:id/config/cash" element={<ConfigCaissePage />} />
       </Routes>
     </MemoryRouter>,
   )

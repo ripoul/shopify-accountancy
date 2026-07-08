@@ -49,10 +49,10 @@ const makeStoreResponse = (royaltyRate = '5.00') => ({
 
 const renderPage = () =>
   render(
-    <MemoryRouter initialEntries={['/store/1/config/redevance']}>
+    <MemoryRouter initialEntries={['/store/1/config/royalties']}>
       <Routes>
         <Route
-          path="/store/:id/config/redevance"
+          path="/store/:id/config/royalties"
           element={<ConfigRedevancePage />}
         />
       </Routes>

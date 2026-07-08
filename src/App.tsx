@@ -71,24 +71,24 @@ const App = () => (
           >
             <Route
               index
-              element={<Navigate to="stats/trimestre-actuel" replace />}
+              element={<Navigate to="stats/current-quarter" replace />}
             />
             <Route
-              path="stats/trimestre-actuel"
+              path="stats/current-quarter"
               element={<StatsCurrentQuarterPage />}
             />
             <Route path="stats/all-time" element={<StatsAllTimePage />} />
             <Route path="stats/products" element={<StatsProductsPage />} />
             <Route path="config/products" element={<ConfigProductsPage />} />
-            <Route path="config/achat" element={<ConfigAchatPage />} />
-            <Route path="config/commandes" element={<ConfigOrdersPage />} />
+            <Route path="config/purchases" element={<ConfigAchatPage />} />
+            <Route path="config/orders" element={<ConfigOrdersPage />} />
             <Route
               path="config/bank-transactions"
               element={<ConfigBankTransactionsPage />}
             />
-            <Route path="config/caisse" element={<ConfigCaissePage />} />
-            <Route path="config/redevance" element={<ConfigRedevancePage />} />
-            <Route path="config/impots" element={<ConfigImpotsPage />} />
+            <Route path="config/cash" element={<ConfigCaissePage />} />
+            <Route path="config/royalties" element={<ConfigRedevancePage />} />
+            <Route path="config/taxes" element={<ConfigImpotsPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
