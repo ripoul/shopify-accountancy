@@ -1,7 +1,17 @@
 import client from './client'
 
-export const listOrders = (storeId: string, page = 1) =>
-  client.get(`/stores/${storeId}/orders/`, { params: { page } })
+export interface OrderListFilters {
+  name?: string
+  processed_after?: string
+  processed_before?: string
+  ordering?: string
+}
+
+export const listOrders = (
+  storeId: string,
+  page = 1,
+  filters: OrderListFilters = {},
+) => client.get(`/stores/${storeId}/orders/`, { params: { page, ...filters } })
 
 export const getOrder = (storeId: string, orderId: number) =>
   client.get(`/stores/${storeId}/orders/${orderId}/`)

@@ -35,6 +35,24 @@ describe('api/orders', () => {
     })
   })
 
+  it('listOrders merges filters into the params', () => {
+    listOrders('42', 2, {
+      name: '#1001',
+      processed_after: '2024-01-01T00:00:00.000Z',
+      processed_before: '2024-02-01T00:00:00.000Z',
+      ordering: '-processed_at',
+    })
+    expect(client.get).toHaveBeenCalledWith('/stores/42/orders/', {
+      params: {
+        page: 2,
+        name: '#1001',
+        processed_after: '2024-01-01T00:00:00.000Z',
+        processed_before: '2024-02-01T00:00:00.000Z',
+        ordering: '-processed_at',
+      },
+    })
+  })
+
   it('getOrder calls GET /stores/{id}/orders/{orderId}/', () => {
     getOrder('42', 7)
     expect(client.get).toHaveBeenCalledWith('/stores/42/orders/7/')

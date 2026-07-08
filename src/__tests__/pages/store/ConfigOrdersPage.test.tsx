@@ -8,6 +8,7 @@ import {
   within,
 } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import dayjs from 'dayjs'
 
 vi.mock('../../../api/orders', () => ({
   listOrders: vi.fn(),
@@ -95,9 +96,9 @@ const makeExpense = (id: number, overrides = {}) => ({
 
 // ─── Setup ────────────────────────────────────────────────────────────────────
 
-const renderPage = () =>
+const renderPage = (initialPath = '/store/1/config/commandes') =>
   render(
-    <MemoryRouter initialEntries={['/store/1/config/commandes']}>
+    <MemoryRouter initialEntries={[initialPath]}>
       <Routes>
         <Route
           path="/store/:id/config/commandes"
@@ -831,7 +832,12 @@ describe('ConfigOrdersPage', () => {
 
     await waitFor(() => expect(screen.getByText('#1003')).toBeInTheDocument())
     expect(mockListOrders).toHaveBeenCalledTimes(2)
-    expect(mockListOrders).toHaveBeenLastCalledWith('1', 2)
+    expect(mockListOrders).toHaveBeenLastCalledWith('1', 2, {
+      name: undefined,
+      processed_after: undefined,
+      processed_before: undefined,
+      ordering: undefined,
+    })
   })
 
   // ── within helper for multi-order scenarios ──────────────────────────────────
@@ -1092,5 +1098,248 @@ describe('ConfigOrdersPage', () => {
 
     expect(screen.getByText('Product A')).toBeInTheDocument()
     expect(mockGetOrder).toHaveBeenCalledTimes(2)
+  })
+
+  // ── Filters ──────────────────────────────────────────────────────────────────
+
+  it('debounces the name search and reloads with the name filter', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+    expect(mockListOrders).toHaveBeenCalledTimes(1)
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/rechercher par n° de commande/i),
+      { target: { value: '1001' } },
+    )
+
+    await waitFor(
+      () =>
+        expect(mockListOrders).toHaveBeenLastCalledWith(
+          '1',
+          1,
+          expect.objectContaining({ name: '1001' }),
+        ),
+      { timeout: 1000 },
+    )
+  })
+
+  it('clears the name search immediately via the clear button', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage('/store/1/config/commandes?name=1001')
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ name: '1001' }),
+      ),
+    )
+    expect(
+      screen.getByPlaceholderText(/rechercher par n° de commande/i),
+    ).toHaveValue('1001')
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /effacer la recherche/i }),
+    )
+
+    expect(
+      screen.getByPlaceholderText(/rechercher par n° de commande/i),
+    ).toHaveValue('')
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ name: undefined }),
+      ),
+    )
+  })
+
+  it('sorts ascending on first header click, descending on second click', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Marge nette' }))
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ ordering: 'net_margin' }),
+      ),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Marge nette' }))
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ ordering: '-net_margin' }),
+      ),
+    )
+  })
+
+  it('switching the sort column resets direction to ascending', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Marge nette' }))
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ ordering: 'net_margin' }),
+      ),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Total' }))
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ ordering: 'total_price' }),
+      ),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Date' }))
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ ordering: 'processed_at' }),
+      ),
+    )
+  })
+
+  it('toggles the date filter panel open and closed', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    expect(screen.queryAllByText('Du')).toHaveLength(0)
+
+    fireEvent.click(screen.getByRole('button', { name: /filtrer par date/i }))
+    expect(screen.getAllByText('Du').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Au').length).toBeGreaterThan(0)
+
+    fireEvent.click(screen.getByRole('button', { name: /filtrer par date/i }))
+    await waitFor(() => expect(screen.queryAllByText('Du')).toHaveLength(0))
+  })
+
+  it('opens the date panel and applies date/ordering filters from the URL on initial load', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage(
+      '/store/1/config/commandes?processed_after=2024-01-01T00%3A00%3A00.000Z&processed_before=2024-02-01T00%3A00%3A00.000Z&ordering=-total_price',
+    )
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenCalledWith('1', 1, {
+        name: undefined,
+        processed_after: '2024-01-01T00:00:00.000Z',
+        processed_before: '2024-02-01T00:00:00.000Z',
+        ordering: '-total_price',
+      }),
+    )
+    expect(screen.getAllByText('Du').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Au').length).toBeGreaterThan(0)
+  })
+
+  it('clears a date filter via the field clear button', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage(
+      '/store/1/config/commandes?processed_after=2024-01-01T00%3A00%3A00.000Z',
+    )
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenCalledWith(
+        '1',
+        1,
+        expect.objectContaining({
+          processed_after: '2024-01-01T00:00:00.000Z',
+        }),
+      ),
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Effacer la valeur' }))
+
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ processed_after: undefined }),
+      ),
+    )
+  })
+
+  it('normalizes the "after" date to local midnight', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: /filtrer par date/i }))
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Choisir la date' })[0],
+    )
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByText(String(dayjs().date())),
+    )
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: /^ok$/i,
+      }),
+    )
+
+    const expected = dayjs().startOf('day').toISOString()
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ processed_after: expected }),
+      ),
+    )
+  })
+
+  it('normalizes the "before" date to local end-of-day', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: /filtrer par date/i }))
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Choisir la date' })[1],
+    )
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByText(String(dayjs().date())),
+    )
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: /^ok$/i,
+      }),
+    )
+
+    const expected = dayjs().endOf('day').toISOString()
+    await waitFor(() =>
+      expect(mockListOrders).toHaveBeenLastCalledWith(
+        '1',
+        1,
+        expect.objectContaining({ processed_before: expected }),
+      ),
+    )
   })
 })

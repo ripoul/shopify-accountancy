@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import {
   Alert,
   Box,
@@ -20,6 +20,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   TextField,
   Tooltip,
   Typography,
@@ -29,11 +30,19 @@ import {
   CheckRounded,
   CloseRounded,
   CloudDownloadRounded,
+  DateRangeRounded,
   DeleteRounded,
   EditRounded,
   KeyboardArrowDownRounded,
   RefreshRounded,
+  SearchRounded,
 } from '@mui/icons-material'
+import { DatePicker } from '@mui/x-date-pickers/DatePicker'
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
+import { frFR } from '@mui/x-date-pickers/locales'
+import dayjs, { type Dayjs } from 'dayjs'
+import 'dayjs/locale/fr'
 import {
   listOrders,
   importOrders,
@@ -43,6 +52,7 @@ import {
   updateOrderExpense,
   deleteOrderExpense,
   updateOrderLineItem,
+  type OrderListFilters,
 } from '../../api/orders'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -126,6 +136,18 @@ const formatDate = (iso: string) =>
   })
 
 const isValidAmount = (v: string) => v !== '' && !isNaN(parseFloat(v))
+
+const buildOrderFilters = (
+  name: string,
+  processedAfter: string,
+  processedBefore: string,
+  ordering: string,
+): OrderListFilters => ({
+  name: name || undefined,
+  processed_after: processedAfter || undefined,
+  processed_before: processedBefore || undefined,
+  ordering: ordering || undefined,
+})
 
 // ─── ExpenseFormRow ───────────────────────────────────────────────────────────
 
@@ -747,6 +769,55 @@ const OrderDetailPanel = ({
 
 const ConfigOrdersPage = () => {
   const { id } = useParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const nameFilter = searchParams.get('name') ?? ''
+  const processedAfterFilter = searchParams.get('processed_after') ?? ''
+  const processedBeforeFilter = searchParams.get('processed_before') ?? ''
+  const orderingFilter = searchParams.get('ordering') ?? ''
+
+  const setFilterParam = useCallback(
+    (key: string, value: string | null) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (value) next.set(key, value)
+          else next.delete(key)
+          return next
+        },
+        { replace: true },
+      )
+    },
+    [setSearchParams],
+  )
+
+  const activeSortField = orderingFilter.replace(/^-/, '') || null
+  const activeSortDirection: 'asc' | 'desc' = orderingFilter.startsWith('-')
+    ? 'desc'
+    : 'asc'
+
+  const handleSort = (field: string) => {
+    if (activeSortField === field) {
+      setFilterParam(
+        'ordering',
+        activeSortDirection === 'asc' ? `-${field}` : field,
+      )
+    } else {
+      setFilterParam('ordering', field)
+    }
+  }
+
+  const [nameInput, setNameInput] = useState(nameFilter)
+  const [dateFilterOpen, setDateFilterOpen] = useState(
+    () => !!(processedAfterFilter || processedBeforeFilter),
+  )
+  const [afterValue, setAfterValue] = useState<Dayjs | null>(() =>
+    processedAfterFilter ? dayjs(processedAfterFilter) : null,
+  )
+  const [beforeValue, setBeforeValue] = useState<Dayjs | null>(() =>
+    processedBeforeFilter ? dayjs(processedBeforeFilter) : null,
+  )
+
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -770,6 +841,27 @@ const ConfigOrdersPage = () => {
   const busyRef = useRef(false)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
+  // ── Filter sync ──────────────────────────────────────────────────────────────
+
+  // Re-derive local filter UI state during render when the URL changes from
+  // outside our own debounce/onAccept handlers (e.g. back/forward navigation).
+  const [prevSearchParams, setPrevSearchParams] = useState(searchParams)
+  if (searchParams !== prevSearchParams) {
+    setPrevSearchParams(searchParams)
+    setNameInput(searchParams.get('name') ?? '')
+    const rawAfter = searchParams.get('processed_after')
+    setAfterValue(rawAfter ? dayjs(rawAfter) : null)
+    const rawBefore = searchParams.get('processed_before')
+    setBeforeValue(rawBefore ? dayjs(rawBefore) : null)
+  }
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setFilterParam('name', nameInput.trim() || null)
+    }, 400)
+    return () => clearTimeout(handle)
+  }, [nameInput, setFilterParam])
+
   // ── Initial load ────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -785,7 +877,16 @@ const ConfigOrdersPage = () => {
       setExpandedIds(new Set())
       setFullOrders(new Map())
       try {
-        const res = await listOrders(id, 1)
+        const res = await listOrders(
+          id,
+          1,
+          buildOrderFilters(
+            nameFilter,
+            processedAfterFilter,
+            processedBeforeFilter,
+            orderingFilter,
+          ),
+        )
         if (cancelled) return
         setOrders(res.data.results)
         setHasMore(!!res.data.next)
@@ -800,13 +901,25 @@ const ConfigOrdersPage = () => {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [
+    id,
+    nameFilter,
+    processedAfterFilter,
+    processedBeforeFilter,
+    orderingFilter,
+  ])
 
   // ── Infinite scroll ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (!hasMore || !sentinelRef.current) return
     const sentinel = sentinelRef.current
+    const filters = buildOrderFilters(
+      nameFilter,
+      processedAfterFilter,
+      processedBeforeFilter,
+      orderingFilter,
+    )
     const observer = new IntersectionObserver(
       async (entries) => {
         if (!entries[0].isIntersecting || busyRef.current) return
@@ -814,7 +927,7 @@ const ConfigOrdersPage = () => {
         setLoadingMore(true)
         try {
           const page = nextPageRef.current
-          const res = await listOrders(id!, page)
+          const res = await listOrders(id!, page, filters)
           setOrders((prev) => [...prev, ...res.data.results])
           setHasMore(!!res.data.next)
           nextPageRef.current = page + 1
@@ -829,7 +942,14 @@ const ConfigOrdersPage = () => {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
-  }, [hasMore, id])
+  }, [
+    hasMore,
+    id,
+    nameFilter,
+    processedAfterFilter,
+    processedBeforeFilter,
+    orderingFilter,
+  ])
 
   // ── Import all orders ───────────────────────────────────────────────────────
 
@@ -844,7 +964,16 @@ const ConfigOrdersPage = () => {
       busyRef.current = false
       setExpandedIds(new Set())
       setFullOrders(new Map())
-      const res = await listOrders(id!, 1)
+      const res = await listOrders(
+        id!,
+        1,
+        buildOrderFilters(
+          nameFilter,
+          processedAfterFilter,
+          processedBeforeFilter,
+          orderingFilter,
+        ),
+      )
       setOrders(res.data.results)
       setHasMore(!!res.data.next)
     } catch {
@@ -972,6 +1101,109 @@ const ConfigOrdersPage = () => {
         </Button>
       </Box>
 
+      <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          sx={{ flexWrap: 'wrap', rowGap: 2 }}
+        >
+          <TextField
+            size="small"
+            placeholder="Rechercher par n° de commande…"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            sx={{ minWidth: 240 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRounded fontSize="small" />
+                  </InputAdornment>
+                ),
+                endAdornment: nameInput ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      aria-label="Effacer la recherche"
+                      onClick={() => {
+                        setNameInput('')
+                        setFilterParam('name', null)
+                      }}
+                    >
+                      <CloseRounded fontSize="small" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : undefined,
+                inputProps: {
+                  'aria-label': 'Rechercher par nom de commande',
+                },
+              },
+            }}
+          />
+
+          <Button
+            size="small"
+            variant={dateFilterOpen ? 'contained' : 'outlined'}
+            startIcon={<DateRangeRounded />}
+            onClick={() => setDateFilterOpen((prev) => !prev)}
+          >
+            Filtrer par date
+          </Button>
+        </Stack>
+
+        <Collapse in={dateFilterOpen} timeout="auto" unmountOnExit>
+          <LocalizationProvider
+            dateAdapter={AdapterDayjs}
+            adapterLocale="fr"
+            localeText={
+              frFR.components.MuiLocalizationProvider.defaultProps.localeText
+            }
+          >
+            <Stack
+              direction="row"
+              spacing={2}
+              sx={{ mt: 2, flexWrap: 'wrap', rowGap: 2 }}
+            >
+              <DatePicker
+                label="Du"
+                value={afterValue}
+                onChange={setAfterValue}
+                onAccept={(value) =>
+                  setFilterParam(
+                    'processed_after',
+                    value && value.isValid()
+                      ? value.startOf('day').toISOString()
+                      : null,
+                  )
+                }
+                slotProps={{
+                  textField: { size: 'small' },
+                  field: { clearable: true },
+                }}
+              />
+              <DatePicker
+                label="Au"
+                value={beforeValue}
+                onChange={setBeforeValue}
+                onAccept={(value) =>
+                  setFilterParam(
+                    'processed_before',
+                    value && value.isValid()
+                      ? value.endOf('day').toISOString()
+                      : null,
+                  )
+                }
+                slotProps={{
+                  textField: { size: 'small' },
+                  field: { clearable: true },
+                }}
+              />
+            </Stack>
+          </LocalizationProvider>
+        </Collapse>
+      </Paper>
+
       {importSuccess && (
         <Alert
           severity="success"
@@ -1000,17 +1232,68 @@ const ConfigOrdersPage = () => {
                 <TableRow>
                   <TableCell sx={{ width: 40 }} />
                   <TableCell sx={{ fontWeight: 600 }}>N°</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
+                  <TableCell
+                    sx={{ fontWeight: 600 }}
+                    sortDirection={
+                      activeSortField === 'processed_at'
+                        ? activeSortDirection
+                        : false
+                    }
+                  >
+                    <TableSortLabel
+                      active={activeSortField === 'processed_at'}
+                      direction={
+                        activeSortField === 'processed_at'
+                          ? activeSortDirection
+                          : 'asc'
+                      }
+                      onClick={() => handleSort('processed_at')}
+                    >
+                      Date
+                    </TableSortLabel>
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>Paiement</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Total
+                  <TableCell
+                    sx={{ fontWeight: 600 }}
+                    align="right"
+                    sortDirection={
+                      activeSortField === 'total_price'
+                        ? activeSortDirection
+                        : false
+                    }
+                  >
+                    <TableSortLabel
+                      active={activeSortField === 'total_price'}
+                      direction={
+                        activeSortField === 'total_price'
+                          ? activeSortDirection
+                          : 'asc'
+                      }
+                      onClick={() => handleSort('total_price')}
+                    >
+                      Total
+                    </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Caisse
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Trimestre</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Marge nette
+                  <TableCell
+                    sx={{ fontWeight: 600 }}
+                    align="right"
+                    sortDirection={
+                      activeSortField === 'net_margin'
+                        ? activeSortDirection
+                        : false
+                    }
+                  >
+                    <TableSortLabel
+                      active={activeSortField === 'net_margin'}
+                      direction={
+                        activeSortField === 'net_margin'
+                          ? activeSortDirection
+                          : 'asc'
+                      }
+                      onClick={() => handleSort('net_margin')}
+                    >
+                      Marge nette
+                    </TableSortLabel>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
                     Résultat net
@@ -1022,7 +1305,7 @@ const ConfigOrdersPage = () => {
                 {orders.length === 0 ? (
                   <TableRow>
                     <TableCell
-                      colSpan={10}
+                      colSpan={8}
                       align="center"
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
@@ -1081,11 +1364,6 @@ const ConfigOrdersPage = () => {
                             {parseFloat(order.total_price).toFixed(2)}{' '}
                             {order.currency_code}
                           </TableCell>
-                          <TableCell align="right">
-                            {parseFloat(order.cash_paid_amount).toFixed(2)}{' '}
-                            {order.currency_code}
-                          </TableCell>
-                          <TableCell>{order.quarter}</TableCell>
                           <TableCell
                             align="right"
                             sx={{
@@ -1135,7 +1413,7 @@ const ConfigOrdersPage = () => {
 
                         <TableRow key={`${order.id}-detail`}>
                           <TableCell
-                            colSpan={10}
+                            colSpan={8}
                             sx={{ p: 0, border: expanded ? undefined : 0 }}
                           >
                             <Collapse
