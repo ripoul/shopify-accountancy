@@ -11,22 +11,9 @@ import {
 } from '@mui/material'
 import ArrowDownwardRounded from '@mui/icons-material/ArrowDownwardRounded'
 import ArrowUpwardRounded from '@mui/icons-material/ArrowUpwardRounded'
+import { useTranslation } from 'react-i18next'
 import { getCurrentQuarterStats, type DashboardStats } from '../../api/stores'
-
-const formatCurrency = (value: string) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(parseFloat(value))
-
-const formatCurrencyExact = (value: string) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(parseFloat(value))
+import { useFormatters } from '../../i18n/useFormatters'
 
 const calcDiff = (
   current: string | number,
@@ -53,6 +40,8 @@ const StatCard = ({
   exactCurrent,
   exactPrevious,
 }: StatCardProps) => {
+  const { t } = useTranslation()
+  const { percent } = useFormatters()
   const isUp = diff !== null && diff > 0
   const isDown = diff !== null && diff < 0
   const trendColor = isUp
@@ -66,10 +55,10 @@ const StatCard = ({
       title={
         <>
           <Typography variant="caption" component="div">
-            Trimestre actuel : {exactCurrent}
+            {t('statsQuarter.tooltipCurrent', { value: exactCurrent })}
           </Typography>
           <Typography variant="caption" component="div">
-            Trimestre précédent : {exactPrevious}
+            {t('statsQuarter.tooltipPrevious', { value: exactPrevious })}
           </Typography>
         </>
       }
@@ -94,8 +83,7 @@ const StatCard = ({
               />
             )}
             <Typography variant="body2" fontWeight={600} color={trendColor}>
-              {diff > 0 ? '+' : ''}
-              {diff.toFixed(1)}%
+              {percent(diff / 100, { signDisplay: 'exceptZero' })}
             </Typography>
           </Box>
         )}
@@ -106,6 +94,8 @@ const StatCard = ({
 
 const StatsCurrentQuarterPage = () => {
   const { id } = useParams<{ id: string }>()
+  const { t } = useTranslation()
+  const { currency } = useFormatters()
   const [data, setData] = useState<DashboardStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -140,11 +130,7 @@ const StatsCurrentQuarterPage = () => {
   }
 
   if (error || !data) {
-    return (
-      <Alert severity="error">
-        Impossible de charger les statistiques du trimestre.
-      </Alert>
-    )
+    return <Alert severity="error">{t('statsQuarter.loadError')}</Alert>
   }
 
   const { current_quarter: cq, previous_quarter: pq } = data
@@ -155,53 +141,63 @@ const StatsCurrentQuarterPage = () => {
     previous: string,
   ): StatCardProps => ({
     label,
-    value: formatCurrency(current),
+    value: currency(current, { maximumFractionDigits: 0 }),
     diff: calcDiff(current, previous),
-    exactCurrent: formatCurrencyExact(current),
-    exactPrevious: formatCurrencyExact(previous),
+    exactCurrent: currency(current, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
+    exactPrevious: currency(previous, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }),
   })
 
   const cards: StatCardProps[] = [
-    currencyStat("Chiffre d'affaires", cq.revenue, pq.revenue),
+    currencyStat(t('statsQuarter.revenue'), cq.revenue, pq.revenue),
     currencyStat(
-      'Variation de trésorerie',
+      t('statsQuarter.cashVariation'),
       cq.cash_variation,
       pq.cash_variation,
     ),
     currencyStat(
-      'Marge avant impôts',
+      t('statsQuarter.profitBeforeTax'),
       cq.profit_before_tax,
       pq.profit_before_tax,
     ),
     currencyStat(
-      'Résultat après impôts',
+      t('statsQuarter.profitAfterTax'),
       cq.profit_after_tax,
       pq.profit_after_tax,
     ),
     currencyStat(
-      'Résultat après impôts et achats',
+      t('statsQuarter.profitAfterTaxAfterPurchase'),
       cq.profit_after_tax_after_purchase,
       pq.profit_after_tax_after_purchase,
     ),
     {
-      label: 'Nombre de commandes',
+      label: t('statsQuarter.orderCount'),
       value: String(cq.order_count),
       diff: calcDiff(cq.order_count, pq.order_count),
       exactCurrent: String(cq.order_count),
       exactPrevious: String(pq.order_count),
     },
     currencyStat(
-      'Bénéfice moyen / commande',
+      t('statsQuarter.avgProfitPerOrder'),
       cq.average_profit_per_order,
       pq.average_profit_per_order,
     ),
-    currencyStat('Panier moyen', cq.average_basket, pq.average_basket),
+    currencyStat(
+      t('statsQuarter.avgBasket'),
+      cq.average_basket,
+      pq.average_basket,
+    ),
   ]
 
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-        Trimestre actuel
+        {t('statsQuarter.title')}
         <Typography
           component="span"
           variant="body2"

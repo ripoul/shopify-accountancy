@@ -31,6 +31,7 @@ import {
   SaveRounded,
   SearchRounded,
 } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import {
   importProducts,
   listProducts,
@@ -111,6 +112,7 @@ const VariantRow = ({
   variant,
   onSaved,
 }: VariantRowProps) => {
+  const { t } = useTranslation()
   const [value, setValue] = useState(variant.distributor_price ?? '')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -135,7 +137,7 @@ const VariantRow = ({
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch {
-      setError('Erreur lors de la sauvegarde.')
+      setError(t('configProducts.saveError'))
     } finally {
       setSaving(false)
     }
@@ -145,26 +147,26 @@ const VariantRow = ({
     <TableRow>
       <TableCell>{variant.title}</TableCell>
       <TableCell>
-        <Tooltip title="Page produit (admin Shopify)">
+        <Tooltip title={t('configProducts.adminProductTooltip')}>
           <IconButton
             size="small"
             component="a"
             href={adminProductUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Page produit (admin Shopify)"
+            aria-label={t('configProducts.adminProductTooltip')}
           >
             <OpenInNewRounded fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Page variante (admin Shopify)">
+        <Tooltip title={t('configProducts.adminVariantTooltip')}>
           <IconButton
             size="small"
             component="a"
             href={adminVariantUrl}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Page variante (admin Shopify)"
+            aria-label={t('configProducts.adminVariantTooltip')}
           >
             <AdminPanelSettingsRounded fontSize="small" />
           </IconButton>
@@ -203,14 +205,14 @@ const VariantRow = ({
         ) : saved ? (
           <CheckRounded color="success" fontSize="small" />
         ) : (
-          <Tooltip title="Enregistrer">
+          <Tooltip title={t('common.save')}>
             <span>
               <IconButton
                 size="small"
                 onClick={handleSave}
                 disabled={!isDirty}
                 color="primary"
-                aria-label="Enregistrer le prix fournisseur"
+                aria-label={t('configProducts.saveSupplierPriceLabel')}
               >
                 <SaveRounded fontSize="small" />
               </IconButton>
@@ -224,6 +226,7 @@ const VariantRow = ({
 
 const ConfigProductsPage = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
   const [products, setProducts] = useState<Product[]>([])
   const [collections, setCollections] = useState<Collection[]>([])
   const [shopDomain, setShopDomain] = useState('')
@@ -245,7 +248,7 @@ const ConfigProductsPage = () => {
       )
       setProducts(all)
     } catch {
-      setError('Impossible de charger les produits.')
+      setError(t('configProducts.loadError'))
     } finally {
       setLoadingProducts(false)
     }
@@ -269,7 +272,7 @@ const ConfigProductsPage = () => {
     setError('')
     fetchAllPages<Product>((page) => listProducts(id!, page))
       .then(setProducts)
-      .catch(() => setError('Impossible de charger les produits.'))
+      .catch(() => setError(t('configProducts.loadError')))
       .finally(() => setLoadingProducts(false))
     fetchAllPages<Collection>((page) => listCollections(id!, page))
       .then(setCollections)
@@ -282,6 +285,7 @@ const ConfigProductsPage = () => {
         if (store) setShopDomain(store.shop_domain)
       })
       .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const handleImport = async () => {
@@ -293,7 +297,7 @@ const ConfigProductsPage = () => {
       setImportSuccess(true)
       await Promise.all([loadProducts(), loadCollections()])
     } catch {
-      setError("L'import a échoué.")
+      setError(t('configProducts.importError'))
     } finally {
       setImporting(false)
     }
@@ -365,7 +369,7 @@ const ConfigProductsPage = () => {
         }}
       >
         <Typography variant="h5" fontWeight={700}>
-          Config — Products
+          {t('configProducts.title')}
         </Typography>
         <Button
           variant="contained"
@@ -379,7 +383,9 @@ const ConfigProductsPage = () => {
           onClick={handleImport}
           disabled={importing}
         >
-          {importing ? 'Import en cours…' : 'Importer les produits'}
+          {importing
+            ? t('configProducts.importing')
+            : t('configProducts.importButton')}
         </Button>
       </Box>
 
@@ -389,7 +395,7 @@ const ConfigProductsPage = () => {
           sx={{ mb: 2 }}
           onClose={() => setImportSuccess(false)}
         >
-          Import terminé avec succès.
+          {t('configProducts.importSuccess')}
         </Alert>
       )}
 
@@ -401,7 +407,7 @@ const ConfigProductsPage = () => {
 
       <Stack spacing={1.5} sx={{ mb: 2 }}>
         <TextField
-          placeholder="Rechercher par nom…"
+          placeholder={t('configProducts.searchPlaceholder')}
           size="small"
           value={nameFilter}
           onChange={(e) => setNameFilter(e.target.value)}
@@ -461,12 +467,14 @@ const ConfigProductsPage = () => {
                         setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))
                       }
                     >
-                      Titre
+                      {t('configProducts.colTitle')}
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Collections</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configProducts.colCollections')}
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600, width: 100 }}>
-                    Variantes
+                    {t('configProducts.colVariants')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -479,8 +487,8 @@ const ConfigProductsPage = () => {
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
                       {products.length === 0
-                        ? 'Aucun produit. Cliquez sur "Importer les produits".'
-                        : 'Aucun produit ne correspond aux filtres.'}
+                        ? t('configProducts.emptyNoProducts')
+                        : t('configProducts.emptyNoMatch')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -542,16 +550,16 @@ const ConfigProductsPage = () => {
                                   <TableHead>
                                     <TableRow>
                                       <TableCell sx={{ fontWeight: 600 }}>
-                                        Variante
+                                        {t('configProducts.colVariant')}
                                       </TableCell>
                                       <TableCell sx={{ fontWeight: 600 }}>
-                                        Référence externe
+                                        {t('configProducts.colExternalRef')}
                                       </TableCell>
                                       <TableCell sx={{ fontWeight: 600 }}>
-                                        Prix de vente
+                                        {t('configProducts.colSellPrice')}
                                       </TableCell>
                                       <TableCell sx={{ fontWeight: 600 }}>
-                                        Prix fournisseur
+                                        {t('configProducts.colSupplierPrice')}
                                       </TableCell>
                                       <TableCell />
                                     </TableRow>
@@ -592,10 +600,12 @@ const ConfigProductsPage = () => {
               color="text.secondary"
               sx={{ mt: 1, display: 'block' }}
             >
-              {filteredProducts.length} produit
-              {filteredProducts.length > 1 ? 's' : ''}
-              {filteredProducts.length !== products.length &&
-                ` sur ${products.length}`}
+              {filteredProducts.length !== products.length
+                ? t('configProducts.countOfTotal', {
+                    count: filteredProducts.length,
+                    total: products.length,
+                  })
+                : t('configProducts.count', { count: filteredProducts.length })}
             </Typography>
           )}
         </>

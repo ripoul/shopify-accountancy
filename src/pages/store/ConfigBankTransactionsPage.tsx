@@ -30,12 +30,14 @@ import {
   AddRounded,
   EditRounded,
 } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import {
   createBankTransaction,
   listBankTransactions,
   updateBankTransaction,
 } from '../../api/transactions'
 import { listStores } from '../../api/stores'
+import { useFormatters } from '../../i18n/useFormatters'
 
 type BankTransactionSource =
   | 'ORDER'
@@ -54,24 +56,18 @@ interface BankTransaction {
   order: number | null
 }
 
-const SOURCE_LABELS: Record<BankTransactionSource, string> = {
-  ORDER: 'Commande',
-  EMPTY_CASHBOX: 'Vidage caisse',
-  FILL_CASHBOX: 'Alimentation caisse',
-  OTHER: 'Autre',
+const SOURCE_LABEL_KEYS: Record<BankTransactionSource, string> = {
+  ORDER: 'sourceOrder',
+  EMPTY_CASHBOX: 'sourceEmptyCashbox',
+  FILL_CASHBOX: 'sourceFillCashbox',
+  OTHER: 'sourceOther',
 }
 
-const CREATE_SOURCE_OPTIONS: { value: BankTxCreateSource; label: string }[] = [
-  { value: 'FILL_CASHBOX', label: 'Alimentation caisse' },
-  { value: 'OTHER', label: 'Autre' },
-]
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+const CREATE_SOURCE_OPTIONS: { value: BankTxCreateSource; labelKey: string }[] =
+  [
+    { value: 'FILL_CASHBOX', labelKey: 'sourceFillCashbox' },
+    { value: 'OTHER', labelKey: 'sourceOther' },
+  ]
 
 interface TxFormDialogProps {
   open: boolean
@@ -92,6 +88,7 @@ const TxFormDialog = ({
   onClose,
   onSaved,
 }: TxFormDialogProps) => {
+  const { t } = useTranslation()
   const [createSource, setCreateSource] =
     useState<BankTxCreateSource>('FILL_CASHBOX')
   const [form, setForm] = useState(() =>
@@ -120,13 +117,13 @@ const TxFormDialog = ({
     try {
       if (mode === 'create') {
         await createBankTransaction(storePk, { source: createSource, ...form })
-        onSaved('Transaction créée avec succès.')
+        onSaved(t('configBankTransactions.createSuccess'))
       } else if (transaction) {
         await updateBankTransaction(storePk, transaction.id, form)
-        onSaved('Transaction mise à jour.')
+        onSaved(t('configBankTransactions.updateSuccess'))
       }
     } catch {
-      setError("L'enregistrement a échoué.")
+      setError(t('common.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -136,8 +133,8 @@ const TxFormDialog = ({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>
         {mode === 'create'
-          ? 'Ajouter une transaction'
-          : 'Modifier la transaction'}
+          ? t('configBankTransactions.dialogTitleCreate')
+          : t('configBankTransactions.dialogTitleEdit')}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
@@ -145,7 +142,7 @@ const TxFormDialog = ({
           {mode === 'create' ? (
             <TextField
               select
-              label="Source"
+              label={t('configBankTransactions.colSource')}
               value={createSource}
               onChange={(e) =>
                 setCreateSource(e.target.value as BankTxCreateSource)
@@ -154,27 +151,30 @@ const TxFormDialog = ({
             >
               {CREATE_SOURCE_OPTIONS.map((opt) => (
                 <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(`configBankTransactions.${opt.labelKey}`)}
                 </MenuItem>
               ))}
             </TextField>
           ) : (
             <TextField
-              label="Source"
-              value={SOURCE_LABELS[transaction!.source] ?? transaction!.source}
+              label={t('configBankTransactions.colSource')}
+              value={t(
+                `configBankTransactions.${SOURCE_LABEL_KEYS[transaction!.source]}`,
+                { defaultValue: transaction!.source },
+              )}
               disabled
               fullWidth
             />
           )}
           <TextField
-            label="Titre"
+            label={t('configBankTransactions.colTitle')}
             value={form.title}
             onChange={(e) => setField('title', e.target.value)}
             required
             fullWidth
           />
           <TextField
-            label="Date"
+            label={t('configBankTransactions.colDate')}
             type="date"
             value={form.date}
             onChange={(e) => setField('date', e.target.value)}
@@ -183,7 +183,7 @@ const TxFormDialog = ({
             slotProps={{ inputLabel: { shrink: true } }}
           />
           <TextField
-            label="Montant"
+            label={t('configBankTransactions.colAmount')}
             type="number"
             value={form.amount}
             onChange={(e) => setField('amount', e.target.value)}
@@ -200,7 +200,7 @@ const TxFormDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
-          Annuler
+          {t('common.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -210,7 +210,7 @@ const TxFormDialog = ({
             saving ? <CircularProgress size={16} color="inherit" /> : undefined
           }
         >
-          {mode === 'create' ? 'Créer' : 'Enregistrer'}
+          {mode === 'create' ? t('common.create') : t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -219,6 +219,8 @@ const TxFormDialog = ({
 
 const ConfigBankTransactionsPage = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
+  const { currency, date } = useFormatters()
   const [transactions, setTransactions] = useState<BankTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -262,7 +264,7 @@ const ConfigBankTransactionsPage = () => {
         setHasMore(!!res.data.next)
       } catch {
         if (cancelled) return
-        setError('Impossible de charger les transactions bancaires.')
+        setError(t('configBankTransactions.loadError'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -271,6 +273,7 @@ const ConfigBankTransactionsPage = () => {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, reloadKey])
 
   useEffect(() => {
@@ -288,7 +291,7 @@ const ConfigBankTransactionsPage = () => {
           setHasMore(!!res.data.next)
           nextPageRef.current = page + 1
         } catch {
-          setError('Erreur lors du chargement.')
+          setError(t('configBankTransactions.loadMoreError'))
         } finally {
           busyRef.current = false
           setLoadingMore(false)
@@ -298,6 +301,7 @@ const ConfigBankTransactionsPage = () => {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, id])
 
   const openCreate = () => {
@@ -329,13 +333,15 @@ const ConfigBankTransactionsPage = () => {
         }}
       >
         <Typography variant="h5" fontWeight={700}>
-          Config — Bank Transactions
+          {t('configBankTransactions.title')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {bankAmount != null && (
             <Chip
               icon={<AccountBalanceRounded />}
-              label={`Solde bancaire : ${parseFloat(bankAmount).toFixed(2)} €`}
+              label={t('configBankTransactions.bankBalance', {
+                amount: currency(bankAmount),
+              })}
               color="primary"
               variant="outlined"
             />
@@ -345,7 +351,7 @@ const ConfigBankTransactionsPage = () => {
             startIcon={<AddRounded />}
             onClick={openCreate}
           >
-            Ajouter
+            {t('configBankTransactions.addButton')}
           </Button>
         </Box>
       </Box>
@@ -376,13 +382,21 @@ const ConfigBankTransactionsPage = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Titre</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Source</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Montant
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configBankTransactions.colDate')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Commande</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configBankTransactions.colTitle')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configBankTransactions.colSource')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    {t('configBankTransactions.colAmount')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configBankTransactions.colOrder')}
+                  </TableCell>
                   <TableCell sx={{ width: 48 }} />
                 </TableRow>
               </TableHead>
@@ -394,16 +408,19 @@ const ConfigBankTransactionsPage = () => {
                       align="center"
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
-                      Aucune transaction bancaire.
+                      {t('configBankTransactions.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   transactions.map((tx) => (
                     <TableRow key={tx.id} hover>
-                      <TableCell>{formatDate(tx.date)}</TableCell>
+                      <TableCell>{date(tx.date)}</TableCell>
                       <TableCell>{tx.title}</TableCell>
                       <TableCell>
-                        {SOURCE_LABELS[tx.source] ?? tx.source}
+                        {t(
+                          `configBankTransactions.${SOURCE_LABEL_KEYS[tx.source]}`,
+                          { defaultValue: tx.source },
+                        )}
                       </TableCell>
                       <TableCell
                         align="right"
@@ -415,18 +432,19 @@ const ConfigBankTransactionsPage = () => {
                           fontWeight: 500,
                         }}
                       >
-                        {parseFloat(tx.amount) >= 0 ? '+' : ''}
-                        {parseFloat(tx.amount).toFixed(2)} €
+                        {currency(tx.amount, { signDisplay: 'exceptZero' })}
                       </TableCell>
                       <TableCell>
                         {tx.order != null ? `#${tx.order}` : '—'}
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="Modifier">
+                        <Tooltip title={t('common.edit')}>
                           <IconButton
                             size="small"
                             onClick={() => openEdit(tx)}
-                            aria-label="Modifier la transaction"
+                            aria-label={t(
+                              'configBankTransactions.dialogTitleEdit',
+                            )}
                           >
                             <EditRounded fontSize="small" />
                           </IconButton>
@@ -445,9 +463,13 @@ const ConfigBankTransactionsPage = () => {
               color="text.secondary"
               sx={{ mt: 1, display: 'block' }}
             >
-              {transactions.length} transaction
-              {transactions.length > 1 ? 's' : ''}
-              {hasMore ? ' (faites défiler pour plus)' : ''}
+              {hasMore
+                ? t('configBankTransactions.countMore', {
+                    count: transactions.length,
+                  })
+                : t('configBankTransactions.count', {
+                    count: transactions.length,
+                  })}
             </Typography>
           )}
         </>

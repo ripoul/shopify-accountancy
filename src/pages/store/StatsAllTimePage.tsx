@@ -9,7 +9,9 @@ import {
   Typography,
 } from '@mui/material'
 import { LineChart } from '@mui/x-charts/LineChart'
+import { useTranslation } from 'react-i18next'
 import { getQuartersHistory, type QuarterHistoryItem } from '../../api/stores'
+import { useFormatters } from '../../i18n/useFormatters'
 
 type MetricKey =
   | 'revenue'
@@ -23,7 +25,15 @@ type MetricKey =
 
 interface MetricDef {
   key: MetricKey
-  label: string
+  labelKey:
+    | 'revenue'
+    | 'cashVariation'
+    | 'profitBeforeTax'
+    | 'profitAfterTax'
+    | 'profitAfterTaxAfterPurchase'
+    | 'orderCount'
+    | 'avgProfitPerOrder'
+    | 'avgBasket'
   color: string
   axis: 'euros' | 'count'
 }
@@ -31,41 +41,46 @@ interface MetricDef {
 type ChartRow = Record<MetricKey, number> & { period: string }
 
 const METRICS: MetricDef[] = [
-  { key: 'revenue', label: 'CA', color: '#5C6BC0', axis: 'euros' },
+  { key: 'revenue', labelKey: 'revenue', color: '#5C6BC0', axis: 'euros' },
   {
     key: 'cash_variation',
-    label: 'Trésorerie',
+    labelKey: 'cashVariation',
     color: '#26A69A',
     axis: 'euros',
   },
   {
     key: 'profit_before_tax',
-    label: 'Marge avant impôts',
+    labelKey: 'profitBeforeTax',
     color: '#FFA726',
     axis: 'euros',
   },
   {
     key: 'profit_after_tax',
-    label: 'Résultat net',
+    labelKey: 'profitAfterTax',
     color: '#66BB6A',
     axis: 'euros',
   },
   {
     key: 'profit_after_tax_after_purchase',
-    label: 'Résultat net (post-achats)',
+    labelKey: 'profitAfterTaxAfterPurchase',
     color: '#EF5350',
     axis: 'euros',
   },
-  { key: 'order_count', label: 'Commandes', color: '#AB47BC', axis: 'count' },
+  {
+    key: 'order_count',
+    labelKey: 'orderCount',
+    color: '#AB47BC',
+    axis: 'count',
+  },
   {
     key: 'average_profit_per_order',
-    label: 'Bénéfice / commande',
+    labelKey: 'avgProfitPerOrder',
     color: '#EC407A',
     axis: 'euros',
   },
   {
     key: 'average_basket',
-    label: 'Panier moyen',
+    labelKey: 'avgBasket',
     color: '#78909C',
     axis: 'euros',
   },
@@ -76,15 +91,6 @@ const DEFAULT_VISIBLE = new Set<MetricKey>([
   'profit_after_tax',
   'order_count',
 ])
-
-const formatEuros = (v: number | null) =>
-  v !== null
-    ? new Intl.NumberFormat('fr-FR', {
-        style: 'currency',
-        currency: 'EUR',
-        maximumFractionDigits: 0,
-      }).format(v)
-    : ''
 
 const toChartRow = (q: QuarterHistoryItem): ChartRow => ({
   period: q.period,
@@ -102,6 +108,9 @@ const toChartRow = (q: QuarterHistoryItem): ChartRow => ({
 
 const StatsAllTimePage = () => {
   const { id } = useParams<{ id: string }>()
+  const { t } = useTranslation()
+  const { currency } = useFormatters()
+  const metricLabel = (m: MetricDef) => t(`statsHistory.${m.labelKey}`)
   const [history, setHistory] = useState<QuarterHistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
@@ -137,15 +146,11 @@ const StatsAllTimePage = () => {
   }
 
   if (error) {
-    return (
-      <Alert severity="error">
-        Impossible de charger l'historique des trimestres.
-      </Alert>
-    )
+    return <Alert severity="error">{t('statsHistory.loadError')}</Alert>
   }
 
   if (history.length === 0) {
-    return <Alert severity="info">Aucune donnée disponible.</Alert>
+    return <Alert severity="info">{t('common.noData')}</Alert>
   }
 
   const toggle = (key: MetricKey) => {
@@ -172,7 +177,7 @@ const StatsAllTimePage = () => {
             id: 'euros',
             position: 'left' as const,
             valueFormatter: (v: number) =>
-              `${Math.round(v).toLocaleString('fr-FR')} €`,
+              currency(v, { maximumFractionDigits: 0 }),
           },
         ]
       : []),
@@ -189,7 +194,7 @@ const StatsAllTimePage = () => {
   return (
     <Box>
       <Typography variant="h5" fontWeight={700} sx={{ mb: 3 }}>
-        Évolution par trimestre
+        {t('statsHistory.title')}
       </Typography>
       <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mb: 3 }}>
         {METRICS.map((m) => {
@@ -197,7 +202,7 @@ const StatsAllTimePage = () => {
           return (
             <Chip
               key={m.key}
-              label={m.label}
+              label={metricLabel(m)}
               onClick={() => toggle(m.key)}
               variant={active ? 'filled' : 'outlined'}
               sx={{
@@ -214,9 +219,7 @@ const StatsAllTimePage = () => {
         })}
       </Stack>
       {visibleMetrics.length === 0 ? (
-        <Alert severity="info">
-          Sélectionnez au moins une métrique à afficher.
-        </Alert>
+        <Alert severity="info">{t('statsHistory.noMetricSelected')}</Alert>
       ) : (
         <Box sx={{ width: '100%' }}>
           <LineChart
@@ -225,11 +228,15 @@ const StatsAllTimePage = () => {
             yAxis={yAxes}
             series={visibleMetrics.map((m) => ({
               dataKey: m.key,
-              label: m.label,
+              label: metricLabel(m),
               color: m.color,
               yAxisId: m.axis === 'count' ? 'count' : 'euros',
               valueFormatter: (v: number | null) =>
-                m.axis === 'euros' ? formatEuros(v) : String(v ?? ''),
+                m.axis === 'euros'
+                  ? v !== null
+                    ? currency(v, { maximumFractionDigits: 0 })
+                    : ''
+                  : String(v ?? ''),
             }))}
             height={420}
           />

@@ -82,7 +82,7 @@ describe('StoreLayout', () => {
     expect(
       screen.getByRole('link', { name: 'Évolution par trimestre' }),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Products' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Produits' })).toBeInTheDocument()
   })
 
   it('Statistiques sub-items link to correct store paths', () => {
@@ -111,7 +111,7 @@ describe('StoreLayout', () => {
     expect(screen.getByRole('link', { name: 'Achat' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Commandes' })).toBeInTheDocument()
     expect(
-      screen.getByRole('link', { name: 'Bank Transactions' }),
+      screen.getByRole('link', { name: 'Transactions bancaires' }),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Caisse' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Redevance' })).toBeInTheDocument()
@@ -147,7 +147,7 @@ describe('StoreLayout', () => {
     renderLayout()
     // Sidebar is open by default — sub-item labels visible
     expect(screen.getByText('Statistiques')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /toggle menu/i }))
+    fireEvent.click(screen.getByRole('button', { name: /basculer le menu/i }))
     // After collapse, section label text is no longer rendered
     expect(screen.queryByText('Statistiques')).not.toBeInTheDocument()
   })

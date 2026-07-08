@@ -162,7 +162,7 @@ describe('ConfigCaissePage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByText(/solde caisse/i)).toBeInTheDocument()
-      expect(screen.getByText(/456\.78/)).toBeInTheDocument()
+      expect(screen.getByText(/456,78/)).toBeInTheDocument()
     })
   })
 
@@ -204,7 +204,7 @@ describe('ConfigCaissePage', () => {
     })
     renderPage()
     await waitFor(() =>
-      expect(screen.getByText('-15.50 €')).toBeInTheDocument(),
+      expect(screen.getByText('-15,50 €')).toBeInTheDocument(),
     )
   })
 

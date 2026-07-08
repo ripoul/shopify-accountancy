@@ -26,8 +26,10 @@ import {
   Typography,
 } from '@mui/material'
 import { EditRounded, SaveRounded } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import { listRoyalties, updateRoyalty } from '../../api/royalties'
 import { getStore, updateStore } from '../../api/stores'
+import { useFormatters } from '../../i18n/useFormatters'
 
 interface Royalty {
   id: number
@@ -38,13 +40,6 @@ interface Royalty {
   sum_after_tax_result: string
   sum_purchase_price: string
 }
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 
 interface RoyaltyFormDialogProps {
   open: boolean
@@ -61,6 +56,7 @@ const RoyaltyFormDialog = ({
   onClose,
   onSaved,
 }: RoyaltyFormDialogProps) => {
+  const { t } = useTranslation()
   const [paymentDate, setPaymentDate] = useState(royalty.payment_date ?? '')
   const [amount, setAmount] = useState(royalty.amount)
   const [saving, setSaving] = useState(false)
@@ -76,9 +72,9 @@ const RoyaltyFormDialog = ({
         payment_date: paymentDate === '' ? null : paymentDate,
         amount,
       })
-      onSaved('Redevance mise à jour.')
+      onSaved(t('configRoyalties.updateSuccess'))
     } catch {
-      setError("L'enregistrement a échoué.")
+      setError(t('common.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -86,12 +82,14 @@ const RoyaltyFormDialog = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Redevance — {royalty.quarter}</DialogTitle>
+      <DialogTitle>
+        {t('configRoyalties.dialogTitle', { quarter: royalty.quarter })}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
           <TextField
-            label="Montant dû"
+            label={t('configRoyalties.colAmountDue')}
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -105,19 +103,19 @@ const RoyaltyFormDialog = ({
             }}
           />
           <TextField
-            label="Date de paiement"
+            label={t('configRoyalties.colPaymentDate')}
             type="date"
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}
             fullWidth
             slotProps={{ inputLabel: { shrink: true } }}
-            helperText="Laisser vide pour retirer la date"
+            helperText={t('configRoyalties.paymentDateHelper')}
           />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
-          Annuler
+          {t('common.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -127,7 +125,7 @@ const RoyaltyFormDialog = ({
             saving ? <CircularProgress size={16} color="inherit" /> : undefined
           }
         >
-          Enregistrer
+          {t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -136,6 +134,8 @@ const RoyaltyFormDialog = ({
 
 const ConfigRedevancePage = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
+  const { currency, date } = useFormatters()
 
   const [royaltyRate, setRoyaltyRate] = useState('')
   const [royaltyRateDraft, setRoyaltyRateDraft] = useState('')
@@ -173,8 +173,7 @@ const ConfigRedevancePage = () => {
         setRoyaltyRate(rate)
         setRoyaltyRateDraft(rate)
       } catch {
-        if (!cancelled)
-          setRateError('Impossible de charger le taux de redevance.')
+        if (!cancelled) setRateError(t('configRoyalties.rateLoadError'))
       } finally {
         if (!cancelled) setLoadingRate(false)
       }
@@ -183,6 +182,7 @@ const ConfigRedevancePage = () => {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   useEffect(() => {
@@ -202,7 +202,7 @@ const ConfigRedevancePage = () => {
         setHasMore(!!res.data.next)
       } catch {
         if (cancelled) return
-        setError('Impossible de charger les redevances.')
+        setError(t('configRoyalties.loadError'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -211,6 +211,7 @@ const ConfigRedevancePage = () => {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, reloadKey])
 
   useEffect(() => {
@@ -228,7 +229,7 @@ const ConfigRedevancePage = () => {
           setHasMore(!!res.data.next)
           nextPageRef.current = page + 1
         } catch {
-          setError('Erreur lors du chargement.')
+          setError(t('configRoyalties.loadMoreError'))
         } finally {
           busyRef.current = false
           setLoadingMore(false)
@@ -238,6 +239,7 @@ const ConfigRedevancePage = () => {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, id])
 
   const handleSaveRate = async () => {
@@ -247,9 +249,9 @@ const ConfigRedevancePage = () => {
     try {
       await updateStore(id, { royalty_rate: royaltyRateDraft })
       setRoyaltyRate(royaltyRateDraft)
-      setSuccessMessage('Taux de redevance mis à jour.')
+      setSuccessMessage(t('configRoyalties.rateUpdateSuccess'))
     } catch {
-      setRateError("L'enregistrement du taux a échoué.")
+      setRateError(t('configRoyalties.rateSaveFailed'))
     } finally {
       setSavingRate(false)
     }
@@ -265,10 +267,10 @@ const ConfigRedevancePage = () => {
     <Box>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" fontWeight={700}>
-          Config — Redevance
+          {t('configRoyalties.title')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Le taux est appliqué automatiquement sur le CA encaissé par trimestre.
+          {t('configRoyalties.subtitle')}
         </Typography>
       </Box>
 
@@ -290,7 +292,7 @@ const ConfigRedevancePage = () => {
 
       <Paper variant="outlined" sx={{ p: 2, mb: 3 }}>
         <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-          Taux de redevance
+          {t('configRoyalties.rateSectionTitle')}
         </Typography>
         {loadingRate ? (
           <CircularProgress size={20} />
@@ -325,7 +327,7 @@ const ConfigRedevancePage = () => {
                   )
                 }
               >
-                Enregistrer
+                {t('common.save')}
               </Button>
             )}
             {rateChanged && (
@@ -334,7 +336,7 @@ const ConfigRedevancePage = () => {
                 onClick={() => setRoyaltyRateDraft(royaltyRate)}
                 disabled={savingRate}
               >
-                Annuler
+                {t('common.cancel')}
               </Button>
             )}
           </Stack>
@@ -359,20 +361,24 @@ const ConfigRedevancePage = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Trimestre</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">
-                    CA HT
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configRoyalties.colQuarter')}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Achats
+                    {t('configRoyalties.colRevenueExTax')}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Montant dû
+                    {t('configRoyalties.colPurchases')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    {t('configRoyalties.colAmountDue')}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>
-                    Date de paiement
+                    {t('configRoyalties.colPaymentDate')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configRoyalties.colStatus')}
+                  </TableCell>
                   <TableCell sx={{ width: 48 }} />
                 </TableRow>
               </TableHead>
@@ -384,7 +390,7 @@ const ConfigRedevancePage = () => {
                       align="center"
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
-                      Aucune redevance enregistrée.
+                      {t('configRoyalties.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -392,25 +398,29 @@ const ConfigRedevancePage = () => {
                     <TableRow key={royalty.id} hover>
                       <TableCell>{royalty.quarter}</TableCell>
                       <TableCell align="right">
-                        {parseFloat(royalty.sum_after_tax_result).toFixed(2)} €
+                        {currency(royalty.sum_after_tax_result)}
                       </TableCell>
                       <TableCell align="right">
-                        {parseFloat(royalty.sum_purchase_price).toFixed(2)} €
+                        {currency(royalty.sum_purchase_price)}
                       </TableCell>
                       <TableCell align="right" sx={{ fontWeight: 500 }}>
-                        {parseFloat(royalty.amount).toFixed(2)} €
+                        {currency(royalty.amount)}
                       </TableCell>
                       <TableCell>
                         {royalty.payment_date
-                          ? formatDate(royalty.payment_date)
+                          ? date(royalty.payment_date)
                           : '—'}
                       </TableCell>
                       <TableCell>
                         {royalty.payment_date ? (
-                          <Chip label="Payé" color="success" size="small" />
+                          <Chip
+                            label={t('configRoyalties.paid')}
+                            color="success"
+                            size="small"
+                          />
                         ) : (
                           <Chip
-                            label="En attente"
+                            label={t('configRoyalties.pending')}
                             color="warning"
                             size="small"
                           />
@@ -420,15 +430,15 @@ const ConfigRedevancePage = () => {
                         <Tooltip
                           title={
                             royalty.payment_date
-                              ? 'Redevance déjà payée — non modifiable'
-                              : 'Modifier'
+                              ? t('configRoyalties.alreadyPaidTooltip')
+                              : t('common.edit')
                           }
                         >
                           <span>
                             <IconButton
                               size="small"
                               onClick={() => setEditingRoyalty(royalty)}
-                              aria-label="Modifier la redevance"
+                              aria-label={t('configRoyalties.editRoyalty')}
                               disabled={!!royalty.payment_date}
                             >
                               <EditRounded fontSize="small" />
@@ -449,8 +459,9 @@ const ConfigRedevancePage = () => {
               color="text.secondary"
               sx={{ mt: 1, display: 'block' }}
             >
-              {royalties.length} trimestre{royalties.length > 1 ? 's' : ''}
-              {hasMore ? ' (faites défiler pour plus)' : ''}
+              {hasMore
+                ? t('configRoyalties.countMore', { count: royalties.length })
+                : t('configRoyalties.count', { count: royalties.length })}
             </Typography>
           )}
         </>

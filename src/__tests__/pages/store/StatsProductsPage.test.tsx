@@ -162,7 +162,7 @@ describe('StatsProductsPage', () => {
       mockGetProductStats.mockResolvedValue({ data: [makeProduct()] })
       renderPage()
       await waitFor(() => {
-        expect(screen.getByText('5.00 %')).toBeInTheDocument()
+        expect(screen.getByText('5,00 %')).toBeInTheDocument()
       })
     })
   })

@@ -30,8 +30,10 @@ import {
   SettingsRounded,
   StorefrontRounded,
 } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/useAuth'
 import Footer from './Footer'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const DRAWER_WIDTH = 240
 const DRAWER_MINI = 56
@@ -41,6 +43,7 @@ const StoreLayout = () => {
   const { logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const [drawerOpen, setDrawerOpen] = useState(true)
   const [statsOpen, setStatsOpen] = useState(true)
   const [configOpen, setConfigOpen] = useState(false)
@@ -51,22 +54,25 @@ const StoreLayout = () => {
   }
 
   const statsItems = [
-    { label: 'Trimestre actuel', path: `/store/${id}/stats/current-quarter` },
-    { label: 'Évolution par trimestre', path: `/store/${id}/stats/all-time` },
-    { label: 'Products', path: `/store/${id}/stats/products` },
+    {
+      label: t('nav.statsCurrentQuarter'),
+      path: `/store/${id}/stats/current-quarter`,
+    },
+    { label: t('nav.statsAllTime'), path: `/store/${id}/stats/all-time` },
+    { label: t('nav.statsProducts'), path: `/store/${id}/stats/products` },
   ]
 
   const configItems = [
-    { label: 'Products', path: `/store/${id}/config/products` },
-    { label: 'Achat', path: `/store/${id}/config/purchases` },
-    { label: 'Commandes', path: `/store/${id}/config/orders` },
+    { label: t('nav.configProducts'), path: `/store/${id}/config/products` },
+    { label: t('nav.configPurchases'), path: `/store/${id}/config/purchases` },
+    { label: t('nav.configOrders'), path: `/store/${id}/config/orders` },
     {
-      label: 'Bank Transactions',
+      label: t('nav.configBankTransactions'),
       path: `/store/${id}/config/bank-transactions`,
     },
-    { label: 'Caisse', path: `/store/${id}/config/cash` },
-    { label: 'Redevance', path: `/store/${id}/config/royalties` },
-    { label: 'Impôts', path: `/store/${id}/config/taxes` },
+    { label: t('nav.configCash'), path: `/store/${id}/config/cash` },
+    { label: t('nav.configRoyalties'), path: `/store/${id}/config/royalties` },
+    { label: t('nav.configTaxes'), path: `/store/${id}/config/taxes` },
   ]
 
   return (
@@ -81,7 +87,7 @@ const StoreLayout = () => {
             color="inherit"
             onClick={() => setDrawerOpen((v) => !v)}
             sx={{ mr: 1 }}
-            aria-label="toggle menu"
+            aria-label={t('nav.toggleMenu')}
           >
             <MenuRounded />
           </IconButton>
@@ -89,17 +95,18 @@ const StoreLayout = () => {
           <Typography variant="h6" fontWeight={700} sx={{ flexGrow: 1 }}>
             Shopify Accountancy
           </Typography>
+          <LanguageSwitcher />
           <Button
             color="inherit"
             component={RouterLink}
             to="/"
             startIcon={<ArrowBackRounded />}
-            sx={{ mr: 1 }}
+            sx={{ ml: 1, mr: 1 }}
           >
-            Mes boutiques
+            {t('nav.myStores')}
           </Button>
           <Button color="inherit" onClick={handleLogout}>
-            Se déconnecter
+            {t('nav.logout')}
           </Button>
         </Toolbar>
       </AppBar>
@@ -128,7 +135,7 @@ const StoreLayout = () => {
               {drawerOpen && (
                 <>
                   <ListItemText
-                    primary="Statistiques"
+                    primary={t('nav.statsSection')}
                     primaryTypographyProps={{ fontWeight: 600 }}
                   />
                   {statsOpen ? <ExpandLess /> : <ExpandMore />}
@@ -160,7 +167,7 @@ const StoreLayout = () => {
               {drawerOpen && (
                 <>
                   <ListItemText
-                    primary="Config"
+                    primary={t('nav.configSection')}
                     primaryTypographyProps={{ fontWeight: 600 }}
                   />
                   {configOpen ? <ExpandLess /> : <ExpandMore />}

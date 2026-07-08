@@ -10,6 +10,7 @@ import {
   Alert,
   Paper,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { register } from '../api/auth'
 
 interface RegisterForm {
@@ -21,6 +22,7 @@ interface RegisterForm {
 
 const RegisterPage = () => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [form, setForm] = useState<RegisterForm>({
     firstName: '',
     lastName: '',
@@ -48,7 +50,7 @@ const RegisterPage = () => {
         const messages = Object.values(data).flat().join(' ')
         setError(messages)
       } else {
-        setError('Une erreur est survenue.')
+        setError(t('common.genericError'))
       }
     } finally {
       setLoading(false)
@@ -67,7 +69,7 @@ const RegisterPage = () => {
       >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
-            Créer un compte
+            {t('auth.registerTitle')}
           </Typography>
 
           {error && (
@@ -79,7 +81,7 @@ const RegisterPage = () => {
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField
-                label="Prénom"
+                label={t('auth.firstName')}
                 name="firstName"
                 value={form.firstName}
                 onChange={handleChange}
@@ -88,7 +90,7 @@ const RegisterPage = () => {
                 autoFocus
               />
               <TextField
-                label="Nom"
+                label={t('auth.lastName')}
                 name="lastName"
                 value={form.lastName}
                 onChange={handleChange}
@@ -97,7 +99,7 @@ const RegisterPage = () => {
               />
             </Box>
             <TextField
-              label="Email"
+              label={t('auth.email')}
               name="email"
               type="email"
               value={form.email}
@@ -107,7 +109,7 @@ const RegisterPage = () => {
               required
             />
             <TextField
-              label="Mot de passe"
+              label={t('auth.password')}
               name="password"
               type="password"
               value={form.password}
@@ -125,14 +127,14 @@ const RegisterPage = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Création en cours…' : 'Créer mon compte'}
+              {loading ? t('auth.registerLoading') : t('auth.registerSubmit')}
             </Button>
           </Box>
 
           <Typography variant="body2" align="center">
-            Déjà un compte ?{' '}
+            {t('auth.haveAccount')}{' '}
             <Link component={RouterLink} to="/login">
-              Se connecter
+              {t('auth.login')}
             </Link>
           </Typography>
         </Paper>

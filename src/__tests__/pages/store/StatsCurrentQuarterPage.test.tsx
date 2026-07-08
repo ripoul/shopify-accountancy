@@ -128,7 +128,7 @@ describe('StatsCurrentQuarterPage', () => {
     )
     renderPage()
     await waitFor(() => {
-      const diffs = screen.getAllByText('+25.0%')
+      const diffs = screen.getAllByText('+25,0 %')
       expect(diffs.length).toBeGreaterThan(0)
     })
   })
@@ -139,7 +139,7 @@ describe('StatsCurrentQuarterPage', () => {
     )
     renderPage()
     await waitFor(() => {
-      expect(screen.getAllByText('-25.0%').length).toBeGreaterThan(0)
+      expect(screen.getAllByText('-25,0 %').length).toBeGreaterThan(0)
     })
   })
 

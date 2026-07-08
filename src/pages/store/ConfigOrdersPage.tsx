@@ -40,9 +40,11 @@ import {
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import { frFR } from '@mui/x-date-pickers/locales'
+import { enUS, frFR } from '@mui/x-date-pickers/locales'
 import dayjs, { type Dayjs } from 'dayjs'
 import 'dayjs/locale/fr'
+import 'dayjs/locale/en-gb'
+import { useTranslation } from 'react-i18next'
 import {
   listOrders,
   importOrders,
@@ -54,6 +56,8 @@ import {
   updateOrderLineItem,
   type OrderListFilters,
 } from '../../api/orders'
+import { useFormatters } from '../../i18n/useFormatters'
+import type { LangCode } from '../../i18n'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -110,11 +114,11 @@ interface ExpenseFormData {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const EXPENSE_TYPE_LABELS: Record<OrderExpenseType, string> = {
-  DELIVERY: 'Livraison',
-  PACKAGING: 'Emballage',
-  SHOPIFY_PAYMENT: 'Paiement Shopify',
-  OTHER: 'Autre',
+const EXPENSE_TYPE_LABEL_KEYS: Record<OrderExpenseType, string> = {
+  DELIVERY: 'expenseTypeDelivery',
+  PACKAGING: 'expenseTypePackaging',
+  SHOPIFY_PAYMENT: 'expenseTypeShopifyPayment',
+  OTHER: 'expenseTypeOther',
 }
 
 const EXPENSE_TYPE_OPTIONS: OrderExpenseType[] = [
@@ -126,14 +130,13 @@ const EXPENSE_TYPE_OPTIONS: OrderExpenseType[] = [
 
 const EMPTY_FORM: ExpenseFormData = { type: 'DELIVERY', amount: '', label: '' }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+const DAYJS_LOCALE: Record<LangCode, string> = {
+  fr_FR: 'fr',
+  en_US: 'en',
+  en_GB: 'en-gb',
+}
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const isValidAmount = (v: string) => v !== '' && !isNaN(parseFloat(v))
 
@@ -166,6 +169,7 @@ const ExpenseFormRow = ({
   onSave,
   onCancel,
 }: ExpenseFormRowProps) => {
+  const { t } = useTranslation()
   const valid = isValidAmount(form.amount)
   return (
     <TableRow>
@@ -177,9 +181,9 @@ const ExpenseFormRow = ({
               onChange({ type: e.target.value as OrderExpenseType })
             }
           >
-            {EXPENSE_TYPE_OPTIONS.map((t) => (
-              <MenuItem key={t} value={t}>
-                {EXPENSE_TYPE_LABELS[t]}
+            {EXPENSE_TYPE_OPTIONS.map((type) => (
+              <MenuItem key={type} value={type}>
+                {t(`configOrders.${EXPENSE_TYPE_LABEL_KEYS[type]}`)}
               </MenuItem>
             ))}
           </Select>
@@ -190,7 +194,7 @@ const ExpenseFormRow = ({
           size="small"
           value={form.label}
           onChange={(e) => onChange({ label: e.target.value })}
-          placeholder="Libellé (optionnel)"
+          placeholder={t('configOrders.labelPlaceholder')}
           sx={{ width: 200 }}
         />
       </TableCell>
@@ -216,21 +220,25 @@ const ExpenseFormRow = ({
           <CircularProgress size={18} />
         ) : (
           <>
-            <Tooltip title="Enregistrer">
+            <Tooltip title={t('common.save')}>
               <span>
                 <IconButton
                   size="small"
                   onClick={onSave}
                   disabled={!valid}
                   color="primary"
-                  aria-label="Enregistrer la dépense"
+                  aria-label={t('configOrders.saveExpenseAriaLabel')}
                 >
                   <CheckRounded fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
-            <Tooltip title="Annuler">
-              <IconButton size="small" onClick={onCancel} aria-label="Annuler">
+            <Tooltip title={t('common.cancel')}>
+              <IconButton
+                size="small"
+                onClick={onCancel}
+                aria-label={t('common.cancel')}
+              >
                 <CloseRounded fontSize="small" />
               </IconButton>
             </Tooltip>
@@ -254,6 +262,8 @@ const OrderDetailPanel = ({
   order,
   onOrderChanged,
 }: OrderDetailPanelProps) => {
+  const { t } = useTranslation()
+  const { currency } = useFormatters()
   const [editing, setEditing] = useState<{
     id: number | null
     form: ExpenseFormData
@@ -293,7 +303,7 @@ const OrderDetailPanel = ({
       onOrderChanged()
       setEditingLineItem(null)
     } catch {
-      setLineItemSaveError('Erreur lors de la sauvegarde.')
+      setLineItemSaveError(t('configOrders.saveError'))
     } finally {
       setSavingLineItem(false)
     }
@@ -334,7 +344,7 @@ const OrderDetailPanel = ({
       onOrderChanged()
       setEditing(null)
     } catch {
-      setSaveError('Erreur lors de la sauvegarde.')
+      setSaveError(t('configOrders.saveError'))
     } finally {
       setSaving(false)
     }
@@ -352,7 +362,7 @@ const OrderDetailPanel = ({
       onOrderChanged()
     } catch {
       setDeleteErrors((prev) =>
-        new Map(prev).set(expenseId, 'Erreur lors de la suppression.'),
+        new Map(prev).set(expenseId, t('configOrders.deleteExpenseError')),
       )
     } finally {
       setDeletingIds((prev) => {
@@ -376,20 +386,22 @@ const OrderDetailPanel = ({
         {/* Articles */}
         <Box>
           <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-            Articles
+            {t('configOrders.articlesTitle')}
           </Typography>
           <Table size="small" component={Paper} variant="outlined">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Produit</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Qté
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configOrders.colProduct')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Prix d&apos;achat
+                  {t('configOrders.colQty')}
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Prix unitaire
+                  {t('configOrders.colPurchasePrice')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('configOrders.colUnitPrice')}
                 </TableCell>
                 <TableCell />
               </TableRow>
@@ -402,7 +414,7 @@ const OrderDetailPanel = ({
                     align="center"
                     sx={{ color: 'text.secondary' }}
                   >
-                    Aucun article.
+                    {t('configOrders.noArticles')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -426,7 +438,9 @@ const OrderDetailPanel = ({
                                     : prev,
                                 )
                               }
-                              placeholder="Prix / unité"
+                              placeholder={t(
+                                'configOrders.supplierPricePlaceholder',
+                              )}
                               slotProps={{
                                 input: {
                                   endAdornment: (
@@ -441,31 +455,34 @@ const OrderDetailPanel = ({
                             />
                           </TableCell>
                           <TableCell align="right">
-                            {(
-                              parseFloat(item.unit_price) * item.quantity
-                            ).toFixed(2)}{' '}
-                            €
+                            {currency(
+                              parseFloat(item.unit_price) * item.quantity,
+                            )}
                           </TableCell>
                           <TableCell sx={{ py: 0.5, whiteSpace: 'nowrap' }}>
                             {savingLineItem ? (
                               <CircularProgress size={18} />
                             ) : (
                               <>
-                                <Tooltip title="Enregistrer">
+                                <Tooltip title={t('common.save')}>
                                   <IconButton
                                     size="small"
                                     onClick={handleSaveLineItem}
                                     color="primary"
-                                    aria-label="Enregistrer le prix fournisseur"
+                                    aria-label={t(
+                                      'configOrders.saveSupplierPriceAriaLabel',
+                                    )}
                                   >
                                     <CheckRounded fontSize="small" />
                                   </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Annuler">
+                                <Tooltip title={t('common.cancel')}>
                                   <IconButton
                                     size="small"
                                     onClick={cancelEditLineItem}
-                                    aria-label="Annuler la modification du prix fournisseur"
+                                    aria-label={t(
+                                      'configOrders.cancelSupplierPriceEditAriaLabel',
+                                    )}
                                   >
                                     <CloseRounded fontSize="small" />
                                   </IconButton>
@@ -485,22 +502,29 @@ const OrderDetailPanel = ({
                           sx={{ color: 'text.secondary' }}
                         >
                           {item.distributor_price != null
-                            ? `${(parseFloat(item.distributor_price) * item.quantity).toFixed(2)} €`
+                            ? currency(
+                                parseFloat(item.distributor_price) *
+                                  item.quantity,
+                              )
                             : '—'}
                         </TableCell>
                         <TableCell align="right">
-                          {(
-                            parseFloat(item.unit_price) * item.quantity
-                          ).toFixed(2)}{' '}
-                          €
+                          {currency(
+                            parseFloat(item.unit_price) * item.quantity,
+                          )}
                         </TableCell>
                         <TableCell sx={{ py: 0.5 }}>
-                          <Tooltip title="Modifier le prix fournisseur">
+                          <Tooltip
+                            title={t('configOrders.editSupplierPriceTooltip')}
+                          >
                             <IconButton
                               size="small"
                               onClick={() => startEditLineItem(item)}
                               disabled={editingLineItem !== null}
-                              aria-label={`Modifier le prix fournisseur de ${item.title}`}
+                              aria-label={t(
+                                'configOrders.editSupplierPriceAriaLabel',
+                                { title: item.title },
+                              )}
                             >
                               <EditRounded fontSize="small" />
                             </IconButton>
@@ -516,32 +540,31 @@ const OrderDetailPanel = ({
                       '& td': { fontWeight: 600 },
                     }}
                   >
-                    <TableCell>Total</TableCell>
+                    <TableCell>{t('configOrders.total')}</TableCell>
                     <TableCell align="right">
                       {order.line_items.reduce((s, i) => s + i.quantity, 0)}
                     </TableCell>
                     <TableCell align="right">
                       {order.line_items.some((i) => i.distributor_price != null)
-                        ? `${order.line_items
-                            .reduce(
+                        ? currency(
+                            order.line_items.reduce(
                               (s, i) =>
                                 s +
                                 (i.distributor_price != null
                                   ? parseFloat(i.distributor_price) * i.quantity
                                   : 0),
                               0,
-                            )
-                            .toFixed(2)} €`
+                            ),
+                          )
                         : '—'}
                     </TableCell>
                     <TableCell align="right">
-                      {order.line_items
-                        .reduce(
+                      {currency(
+                        order.line_items.reduce(
                           (s, i) => s + parseFloat(i.unit_price) * i.quantity,
                           0,
-                        )
-                        .toFixed(2)}{' '}
-                      €
+                        ),
+                      )}
                     </TableCell>
                     <TableCell />
                   </TableRow>
@@ -560,15 +583,19 @@ const OrderDetailPanel = ({
         {order.discounts.length > 0 && (
           <Box>
             <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
-              Remises
+              {t('configOrders.discountsTitle')}
             </Typography>
             <Table size="small" component={Paper} variant="outlined">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Code</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Titre</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configOrders.colCode')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configOrders.colDiscountTitle')}
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Montant
+                    {t('configOrders.colAmount')}
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -578,7 +605,7 @@ const OrderDetailPanel = ({
                     <TableCell>{discount.code || '—'}</TableCell>
                     <TableCell>{discount.title}</TableCell>
                     <TableCell align="right" sx={{ color: 'error.main' }}>
-                      -{parseFloat(discount.amount).toFixed(2)} €
+                      -{currency(discount.amount)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -596,16 +623,16 @@ const OrderDetailPanel = ({
             sx={{ mb: 1 }}
           >
             <Typography variant="subtitle2" fontWeight={600}>
-              Dépenses
+              {t('configOrders.expensesTitle')}
             </Typography>
             {editing === null && (
               <Button
                 size="small"
                 startIcon={<AddRounded />}
                 onClick={startAdd}
-                aria-label="Ajouter une dépense"
+                aria-label={t('configOrders.addExpenseAriaLabel')}
               >
-                Ajouter
+                {t('configOrders.addExpense')}
               </Button>
             )}
           </Stack>
@@ -613,12 +640,18 @@ const OrderDetailPanel = ({
           <Table size="small" component={Paper} variant="outlined">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Type</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Libellé</TableCell>
-                <TableCell sx={{ fontWeight: 600 }} align="right">
-                  Montant
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configOrders.colType')}
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Source</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configOrders.colLabel')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }} align="right">
+                  {t('configOrders.colAmount')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configOrders.colSource')}
+                </TableCell>
                 <TableCell />
               </TableRow>
             </TableHead>
@@ -630,7 +663,7 @@ const OrderDetailPanel = ({
                     align="center"
                     sx={{ color: 'text.secondary' }}
                   >
-                    Aucune dépense pour cette commande.
+                    {t('configOrders.noExpenses')}
                   </TableCell>
                 </TableRow>
               )}
@@ -663,7 +696,10 @@ const OrderDetailPanel = ({
                   <>
                     <TableRow key={expense.id}>
                       <TableCell>
-                        {EXPENSE_TYPE_LABELS[expense.type] ?? expense.type}
+                        {t(
+                          `configOrders.${EXPENSE_TYPE_LABEL_KEYS[expense.type]}`,
+                          { defaultValue: expense.type },
+                        )}
                       </TableCell>
                       <TableCell>{expense.label || '—'}</TableCell>
                       <TableCell
@@ -675,11 +711,15 @@ const OrderDetailPanel = ({
                               : 'inherit',
                         }}
                       >
-                        {parseFloat(expense.amount).toFixed(2)} €
+                        {currency(expense.amount)}
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={expense.source === 'AUTO' ? 'Auto' : 'Manuel'}
+                          label={
+                            expense.source === 'AUTO'
+                              ? t('configOrders.sourceAuto')
+                              : t('configOrders.sourceManual')
+                          }
                           size="small"
                           variant="outlined"
                           color={
@@ -692,26 +732,32 @@ const OrderDetailPanel = ({
                           <CircularProgress size={16} />
                         ) : expense.source === 'MANUAL' ? (
                           <>
-                            <Tooltip title="Modifier">
+                            <Tooltip title={t('common.edit')}>
                               <span>
                                 <IconButton
                                   size="small"
                                   onClick={() => startEdit(expense)}
                                   disabled={editing !== null}
-                                  aria-label={`Modifier la dépense ${expense.id}`}
+                                  aria-label={t(
+                                    'configOrders.editExpenseAriaLabel',
+                                    { id: expense.id },
+                                  )}
                                 >
                                   <EditRounded fontSize="small" />
                                 </IconButton>
                               </span>
                             </Tooltip>
-                            <Tooltip title="Supprimer">
+                            <Tooltip title={t('common.delete')}>
                               <span>
                                 <IconButton
                                   size="small"
                                   onClick={() => handleDelete(expense.id)}
                                   disabled={editing !== null}
                                   color="error"
-                                  aria-label={`Supprimer la dépense ${expense.id}`}
+                                  aria-label={t(
+                                    'configOrders.deleteExpenseAriaLabel',
+                                    { id: expense.id },
+                                  )}
                                 >
                                   <DeleteRounded fontSize="small" />
                                 </IconButton>
@@ -769,6 +815,8 @@ const OrderDetailPanel = ({
 
 const ConfigOrdersPage = () => {
   const { id } = useParams()
+  const { t, i18n } = useTranslation()
+  const { currency, date } = useFormatters()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const nameFilter = searchParams.get('name') ?? ''
@@ -892,7 +940,7 @@ const ConfigOrdersPage = () => {
         setHasMore(!!res.data.next)
       } catch {
         if (cancelled) return
-        setError('Impossible de charger les commandes.')
+        setError(t('configOrders.loadError'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -901,6 +949,7 @@ const ConfigOrdersPage = () => {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     id,
     nameFilter,
@@ -932,7 +981,7 @@ const ConfigOrdersPage = () => {
           setHasMore(!!res.data.next)
           nextPageRef.current = page + 1
         } catch {
-          setError('Erreur lors du chargement.')
+          setError(t('configOrders.loadMoreError'))
         } finally {
           busyRef.current = false
           setLoadingMore(false)
@@ -942,6 +991,7 @@ const ConfigOrdersPage = () => {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     hasMore,
     id,
@@ -977,7 +1027,7 @@ const ConfigOrdersPage = () => {
       setOrders(res.data.results)
       setHasMore(!!res.data.next)
     } catch {
-      setError("L'import a échoué.")
+      setError(t('configOrders.importError'))
     } finally {
       setImporting(false)
     }
@@ -1010,7 +1060,7 @@ const ConfigOrdersPage = () => {
         2000,
       )
     } catch {
-      setError(`Impossible de re-importer la commande ${order.name}.`)
+      setError(t('configOrders.reimportError', { name: order.name }))
     } finally {
       setReimportingIds((prev) => {
         const next = new Set(prev)
@@ -1043,7 +1093,7 @@ const ConfigOrdersPage = () => {
         setFullOrders((prev) => new Map(prev).set(order.id, res.data))
       } catch {
         setDetailErrors((prev) =>
-          new Map(prev).set(order.id, 'Impossible de charger les détails.'),
+          new Map(prev).set(order.id, t('configOrders.detailLoadError')),
         )
       } finally {
         setLoadingDetailIds((prev) => {
@@ -1083,7 +1133,7 @@ const ConfigOrdersPage = () => {
         }}
       >
         <Typography variant="h5" fontWeight={700}>
-          Config — Commandes
+          {t('configOrders.title')}
         </Typography>
         <Button
           variant="contained"
@@ -1097,7 +1147,9 @@ const ConfigOrdersPage = () => {
           onClick={handleImport}
           disabled={importing}
         >
-          {importing ? 'Import en cours…' : 'Importer les commandes'}
+          {importing
+            ? t('configOrders.importing')
+            : t('configOrders.importButton')}
         </Button>
       </Box>
 
@@ -1110,7 +1162,7 @@ const ConfigOrdersPage = () => {
         >
           <TextField
             size="small"
-            placeholder="Rechercher par n° de commande…"
+            placeholder={t('configOrders.searchPlaceholder')}
             value={nameInput}
             onChange={(e) => setNameInput(e.target.value)}
             sx={{ minWidth: 240 }}
@@ -1125,7 +1177,7 @@ const ConfigOrdersPage = () => {
                   <InputAdornment position="end">
                     <IconButton
                       size="small"
-                      aria-label="Effacer la recherche"
+                      aria-label={t('configOrders.clearSearchAriaLabel')}
                       onClick={() => {
                         setNameInput('')
                         setFilterParam('name', null)
@@ -1136,7 +1188,7 @@ const ConfigOrdersPage = () => {
                   </InputAdornment>
                 ) : undefined,
                 inputProps: {
-                  'aria-label': 'Rechercher par nom de commande',
+                  'aria-label': t('configOrders.searchAriaLabel'),
                 },
               },
             }}
@@ -1148,16 +1200,17 @@ const ConfigOrdersPage = () => {
             startIcon={<DateRangeRounded />}
             onClick={() => setDateFilterOpen((prev) => !prev)}
           >
-            Filtrer par date
+            {t('configOrders.filterByDate')}
           </Button>
         </Stack>
 
         <Collapse in={dateFilterOpen} timeout="auto" unmountOnExit>
           <LocalizationProvider
             dateAdapter={AdapterDayjs}
-            adapterLocale="fr"
+            adapterLocale={DAYJS_LOCALE[i18n.language as LangCode]}
             localeText={
-              frFR.components.MuiLocalizationProvider.defaultProps.localeText
+              (i18n.language === 'fr_FR' ? frFR : enUS).components
+                .MuiLocalizationProvider.defaultProps.localeText
             }
           >
             <Stack
@@ -1166,7 +1219,7 @@ const ConfigOrdersPage = () => {
               sx={{ mt: 2, flexWrap: 'wrap', rowGap: 2 }}
             >
               <DatePicker
-                label="Du"
+                label={t('configOrders.dateFrom')}
                 value={afterValue}
                 onChange={setAfterValue}
                 onAccept={(value) =>
@@ -1183,7 +1236,7 @@ const ConfigOrdersPage = () => {
                 }}
               />
               <DatePicker
-                label="Au"
+                label={t('configOrders.dateTo')}
                 value={beforeValue}
                 onChange={setBeforeValue}
                 onAccept={(value) =>
@@ -1210,7 +1263,7 @@ const ConfigOrdersPage = () => {
           sx={{ mb: 2 }}
           onClose={() => setImportSuccess(false)}
         >
-          Import terminé avec succès.
+          {t('configOrders.importSuccess')}
         </Alert>
       )}
 
@@ -1231,7 +1284,9 @@ const ConfigOrdersPage = () => {
               <TableHead>
                 <TableRow>
                   <TableCell sx={{ width: 40 }} />
-                  <TableCell sx={{ fontWeight: 600 }}>N°</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configOrders.colNumber')}
+                  </TableCell>
                   <TableCell
                     sx={{ fontWeight: 600 }}
                     sortDirection={
@@ -1249,10 +1304,12 @@ const ConfigOrdersPage = () => {
                       }
                       onClick={() => handleSort('processed_at')}
                     >
-                      Date
+                      {t('configOrders.colDate')}
                     </TableSortLabel>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Paiement</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configOrders.colPayment')}
+                  </TableCell>
                   <TableCell
                     sx={{ fontWeight: 600 }}
                     align="right"
@@ -1271,7 +1328,7 @@ const ConfigOrdersPage = () => {
                       }
                       onClick={() => handleSort('total_price')}
                     >
-                      Total
+                      {t('configOrders.colTotal')}
                     </TableSortLabel>
                   </TableCell>
                   <TableCell
@@ -1292,11 +1349,11 @@ const ConfigOrdersPage = () => {
                       }
                       onClick={() => handleSort('net_margin')}
                     >
-                      Marge nette
+                      {t('configOrders.colNetMargin')}
                     </TableSortLabel>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Résultat net
+                    {t('configOrders.colNetResult')}
                   </TableCell>
                   <TableCell />
                 </TableRow>
@@ -1309,8 +1366,7 @@ const ConfigOrdersPage = () => {
                       align="center"
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
-                      Aucune commande. Cliquez sur &quot;Importer les
-                      commandes&quot;.
+                      {t('configOrders.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -1339,8 +1395,12 @@ const ConfigOrdersPage = () => {
                               onClick={() => toggleExpand(order)}
                               aria-label={
                                 expanded
-                                  ? `Réduire la commande ${order.name}`
-                                  : `Développer la commande ${order.name}`
+                                  ? t('configOrders.collapseOrder', {
+                                      name: order.name,
+                                    })
+                                  : t('configOrders.expandOrder', {
+                                      name: order.name,
+                                    })
                               }
                             >
                               <KeyboardArrowDownRounded
@@ -1356,13 +1416,12 @@ const ConfigOrdersPage = () => {
                             </IconButton>
                           </TableCell>
                           <TableCell>{order.name}</TableCell>
-                          <TableCell>
-                            {formatDate(order.processed_at)}
-                          </TableCell>
+                          <TableCell>{date(order.processed_at)}</TableCell>
                           <TableCell>{order.payment_method}</TableCell>
                           <TableCell align="right">
-                            {parseFloat(order.total_price).toFixed(2)}{' '}
-                            {order.currency_code}
+                            {currency(order.total_price, {
+                              currency: order.currency_code,
+                            })}
                           </TableCell>
                           <TableCell
                             align="right"
@@ -1373,8 +1432,9 @@ const ConfigOrdersPage = () => {
                                   : 'error.main',
                             }}
                           >
-                            {parseFloat(order.net_margin).toFixed(2)}{' '}
-                            {order.currency_code}
+                            {currency(order.net_margin, {
+                              currency: order.currency_code,
+                            })}
                           </TableCell>
                           <TableCell
                             align="right"
@@ -1385,8 +1445,9 @@ const ConfigOrdersPage = () => {
                                   : 'error.main',
                             }}
                           >
-                            {parseFloat(order.after_tax_result).toFixed(2)}{' '}
-                            {order.currency_code}
+                            {currency(order.after_tax_result, {
+                              currency: order.currency_code,
+                            })}
                           </TableCell>
                           <TableCell
                             align="center"
@@ -1398,11 +1459,16 @@ const ConfigOrdersPage = () => {
                             ) : isReimported ? (
                               <CheckRounded color="success" fontSize="small" />
                             ) : (
-                              <Tooltip title="Re-importer cette commande">
+                              <Tooltip
+                                title={t('configOrders.reimportTooltip')}
+                              >
                                 <IconButton
                                   size="small"
                                   onClick={() => handleReimport(order)}
-                                  aria-label={`Re-importer la commande ${order.name}`}
+                                  aria-label={t(
+                                    'configOrders.reimportAriaLabel',
+                                    { name: order.name },
+                                  )}
                                 >
                                   <RefreshRounded fontSize="small" />
                                 </IconButton>
@@ -1462,9 +1528,9 @@ const ConfigOrdersPage = () => {
               color="text.secondary"
               sx={{ mt: 1, display: 'block' }}
             >
-              {orders.length} commande{orders.length > 1 ? 's' : ''} chargée
-              {orders.length > 1 ? 's' : ''}
-              {hasMore ? ' (faites défiler pour plus)' : ''}
+              {hasMore
+                ? t('configOrders.countLoadedMore', { count: orders.length })
+                : t('configOrders.countLoaded', { count: orders.length })}
             </Typography>
           )}
         </>

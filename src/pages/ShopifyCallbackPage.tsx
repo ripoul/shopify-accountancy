@@ -9,6 +9,7 @@ import {
   Button,
   Paper,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { connectStore } from '../api/stores'
 
 const REQUIRED_PARAMS = ['shop', 'code', 'hmac', 'host', 'state', 'timestamp']
@@ -16,6 +17,7 @@ const REQUIRED_PARAMS = ['shop', 'code', 'hmac', 'host', 'state', 'timestamp']
 const ShopifyCallbackPage = () => {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const params = useMemo(
     () =>
       Object.fromEntries(
@@ -42,18 +44,16 @@ const ShopifyCallbackPage = () => {
           .response?.data
         if (data) {
           const messages = Object.values(data).flat().join(' ')
-          setErrorMessage(messages || 'Une erreur est survenue.')
+          setErrorMessage(messages || t('common.genericError'))
         } else {
-          setErrorMessage(
-            'Impossible de connecter la boutique. Veuillez réessayer.',
-          )
+          setErrorMessage(t('shopify.callbackError'))
         }
         setStatus('error')
       }
     }
 
     run()
-  }, [hasMissingParams, navigate, params])
+  }, [hasMissingParams, navigate, params, t])
 
   return (
     <Container maxWidth="sm">
@@ -63,7 +63,7 @@ const ShopifyCallbackPage = () => {
             <>
               <CircularProgress sx={{ mb: 2 }} />
               <Typography variant="h6">
-                Connexion de votre boutique Shopify…
+                {t('shopify.callbackLoading')}
               </Typography>
             </>
           )}
@@ -74,7 +74,7 @@ const ShopifyCallbackPage = () => {
                 {errorMessage}
               </Alert>
               <Button variant="outlined" onClick={() => navigate('/')}>
-                Retour à l'accueil
+                {t('shopify.backToHome')}
               </Button>
             </>
           )}
@@ -82,10 +82,10 @@ const ShopifyCallbackPage = () => {
           {visibleStatus === 'missing_params' && (
             <>
               <Alert severity="warning" sx={{ mb: 3, textAlign: 'left' }}>
-                Paramètres Shopify manquants. Ce lien semble invalide.
+                {t('shopify.missingParams')}
               </Alert>
               <Button variant="outlined" onClick={() => navigate('/')}>
-                Retour à l'accueil
+                {t('shopify.backToHome')}
               </Button>
             </>
           )}

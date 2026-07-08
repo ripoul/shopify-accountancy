@@ -21,6 +21,7 @@ import {
   Typography,
 } from '@mui/material'
 import SearchRounded from '@mui/icons-material/SearchRounded'
+import { useTranslation } from 'react-i18next'
 import {
   getProductStats,
   getVariantStats,
@@ -28,6 +29,7 @@ import {
   type ProductStats,
   type VariantStats,
 } from '../../api/products'
+import { useFormatters } from '../../i18n/useFormatters'
 
 interface Collection {
   id: number
@@ -39,15 +41,6 @@ type Mode = 'product' | 'variant'
 type SortDir = 'asc' | 'desc'
 
 const DEBOUNCE_MS = 300
-
-const formatEuros = (v: string) =>
-  new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 2,
-  }).format(parseFloat(v))
-
-const formatRate = (v: string) => `${(parseFloat(v) * 100).toFixed(2)} %`
 
 const getVal = (
   row: ProductStats | VariantStats,
@@ -96,6 +89,8 @@ const fetchAllCollections = async (storePk: string): Promise<Collection[]> => {
 
 const StatsProductsPage = () => {
   const { id } = useParams<{ id: string }>()
+  const { t } = useTranslation()
+  const { currency, percent } = useFormatters()
   const [mode, setMode] = useState<Mode>('product')
   const [rows, setRows] = useState<(ProductStats | VariantStats)[]>([])
   const [collections, setCollections] = useState<Collection[]>([])
@@ -205,7 +200,7 @@ const StatsProductsPage = () => {
         }}
       >
         <Typography variant="h5" fontWeight={700}>
-          Statistiques produits
+          {t('statsProducts.title')}
         </Typography>
         <ToggleButtonGroup
           value={mode}
@@ -213,15 +208,19 @@ const StatsProductsPage = () => {
           onChange={handleModeChange}
           size="small"
         >
-          <ToggleButton value="product">Produit</ToggleButton>
-          <ToggleButton value="variant">Variante</ToggleButton>
+          <ToggleButton value="product">
+            {t('statsProducts.modeProduct')}
+          </ToggleButton>
+          <ToggleButton value="variant">
+            {t('statsProducts.modeVariant')}
+          </ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
       <Stack spacing={1} sx={{ mb: 2 }}>
         <TextField
           size="small"
-          placeholder="Rechercher par nom…"
+          placeholder={t('statsProducts.searchPlaceholder')}
           value={nameInput}
           onChange={(e) => setNameInput(e.target.value)}
           sx={{ width: 280 }}
@@ -260,13 +259,11 @@ const StatsProductsPage = () => {
       )}
 
       {!loading && error && (
-        <Alert severity="error">
-          Impossible de charger les statistiques produits.
-        </Alert>
+        <Alert severity="error">{t('statsProducts.loadError')}</Alert>
       )}
 
       {!loading && !error && sortedRows.length === 0 && (
-        <Alert severity="info">Aucune donnée disponible.</Alert>
+        <Alert severity="info">{t('common.noData')}</Alert>
       )}
 
       {!loading && !error && sortedRows.length > 0 && (
@@ -274,13 +271,25 @@ const StatsProductsPage = () => {
           <Table size="small">
             <TableHead>
               <TableRow>
-                {mode === 'variant' && sortCell('product_title', 'Produit')}
-                {sortCell('title', mode === 'variant' ? 'Variante' : 'Nom')}
-                {sortCell('total_sold', 'Qté vendue')}
-                {sortCell('net_gain', 'Gain net')}
-                {sortCell('net_gain_per_unit', 'Gain / unité')}
-                {sortCell('orders_containing', 'Nb commandes')}
-                {sortCell('occurrence_rate', 'Taux')}
+                {mode === 'variant' &&
+                  sortCell('product_title', t('statsProducts.colProduct'))}
+                {sortCell(
+                  'title',
+                  mode === 'variant'
+                    ? t('statsProducts.colVariant')
+                    : t('statsProducts.colName'),
+                )}
+                {sortCell('total_sold', t('statsProducts.colQtySold'))}
+                {sortCell('net_gain', t('statsProducts.colNetGain'))}
+                {sortCell(
+                  'net_gain_per_unit',
+                  t('statsProducts.colNetGainPerUnit'),
+                )}
+                {sortCell(
+                  'orders_containing',
+                  t('statsProducts.colOrdersCount'),
+                )}
+                {sortCell('occurrence_rate', t('statsProducts.colRate'))}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -292,14 +301,19 @@ const StatsProductsPage = () => {
                   <TableCell>{row.title}</TableCell>
                   <TableCell align="right">{row.total_sold}</TableCell>
                   <TableCell align="right">
-                    {formatEuros(row.net_gain)}
+                    {currency(row.net_gain, { maximumFractionDigits: 2 })}
                   </TableCell>
                   <TableCell align="right">
-                    {formatEuros(row.net_gain_per_unit)}
+                    {currency(row.net_gain_per_unit, {
+                      maximumFractionDigits: 2,
+                    })}
                   </TableCell>
                   <TableCell align="right">{row.orders_containing}</TableCell>
                   <TableCell align="right">
-                    {formatRate(row.occurrence_rate)}
+                    {percent(parseFloat(row.occurrence_rate), {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
                   </TableCell>
                 </TableRow>
               ))}

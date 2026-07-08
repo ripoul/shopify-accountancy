@@ -446,15 +446,15 @@ describe('ConfigOrdersPage', () => {
     await waitFor(() => expect(screen.getByText('T-Shirt')).toBeInTheDocument())
 
     // distributor_price * quantity: 8*2=16, 20*1=20
-    expect(screen.getByText('16.00 €')).toBeInTheDocument()
-    expect(screen.getByText('20.00 €')).toBeInTheDocument()
+    expect(screen.getByText('16,00 €')).toBeInTheDocument()
+    expect(screen.getByText('20,00 €')).toBeInTheDocument()
 
     // totals row: qty=3, achat=36, vente=65
     // ("Total" also appears as a column header in the outer table, so getAllByText)
     expect(screen.getAllByText('Total').length).toBeGreaterThanOrEqual(1)
     expect(screen.getByText('3')).toBeInTheDocument()
-    expect(screen.getByText('36.00 €')).toBeInTheDocument()
-    expect(screen.getByText('65.00 €')).toBeInTheDocument()
+    expect(screen.getByText('36,00 €')).toBeInTheDocument()
+    expect(screen.getByText('65,00 €')).toBeInTheDocument()
   })
 
   it('shows — for distributor_price when null, total achat is — when all null', async () => {
@@ -552,7 +552,7 @@ describe('ConfigOrdersPage', () => {
     await waitFor(() =>
       expect(screen.getByText('Colissimo')).toBeInTheDocument(),
     )
-    expect(screen.getByText('5.90 €')).toBeInTheDocument()
+    expect(screen.getByText('5,90 €')).toBeInTheDocument()
     expect(screen.getByText('Manuel')).toBeInTheDocument()
   })
 
@@ -936,7 +936,7 @@ describe('ConfigOrdersPage', () => {
     )
     // 9.50 * 2 = 19.00 (appears in item row and total row)
     await waitFor(() =>
-      expect(screen.getAllByText('19.00 €').length).toBeGreaterThanOrEqual(1),
+      expect(screen.getAllByText('19,00 €').length).toBeGreaterThanOrEqual(1),
     )
     // Input should be gone
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument()
@@ -1018,7 +1018,7 @@ describe('ConfigOrdersPage', () => {
     expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument()
     expect(mockUpdateOrderLineItem).not.toHaveBeenCalled()
     // Original price still shown: 8.00 * 2 = 16.00 (appears in item row and total row)
-    expect(screen.getAllByText('16.00 €').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText('16,00 €').length).toBeGreaterThanOrEqual(1)
   })
 
   it('shows error when updateOrderLineItem fails', async () => {

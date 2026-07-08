@@ -25,7 +25,9 @@ import {
   Typography,
 } from '@mui/material'
 import { EditRounded } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import { listTaxes, updateTax } from '../../api/taxes'
+import { useFormatters } from '../../i18n/useFormatters'
 
 interface Tax {
   id: number
@@ -34,13 +36,6 @@ interface Tax {
   payment_date: string | null
   bank_transaction: number | null
 }
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 
 interface TaxFormDialogProps {
   open: boolean
@@ -57,6 +52,7 @@ const TaxFormDialog = ({
   onClose,
   onSaved,
 }: TaxFormDialogProps) => {
+  const { t } = useTranslation()
   const [paymentDate, setPaymentDate] = useState(tax.payment_date ?? '')
   const [amount, setAmount] = useState(tax.amount)
   const [saving, setSaving] = useState(false)
@@ -72,9 +68,9 @@ const TaxFormDialog = ({
         payment_date: paymentDate === '' ? null : paymentDate,
         amount,
       })
-      onSaved('Impôt mis à jour.')
+      onSaved(t('configTaxes.updateSuccess'))
     } catch {
-      setError("L'enregistrement a échoué.")
+      setError(t('common.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -82,12 +78,14 @@ const TaxFormDialog = ({
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
-      <DialogTitle>Impôt — {tax.quarter}</DialogTitle>
+      <DialogTitle>
+        {t('configTaxes.dialogTitle', { quarter: tax.quarter })}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
           <TextField
-            label="Montant dû"
+            label={t('configTaxes.colAmountDue')}
             type="number"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -101,19 +99,19 @@ const TaxFormDialog = ({
             }}
           />
           <TextField
-            label="Date de paiement"
+            label={t('configTaxes.colPaymentDate')}
             type="date"
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}
             fullWidth
             slotProps={{ inputLabel: { shrink: true } }}
-            helperText="Laisser vide pour retirer la date"
+            helperText={t('configTaxes.paymentDateHelper')}
           />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
-          Annuler
+          {t('common.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -123,7 +121,7 @@ const TaxFormDialog = ({
             saving ? <CircularProgress size={16} color="inherit" /> : undefined
           }
         >
-          Enregistrer
+          {t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -132,6 +130,8 @@ const TaxFormDialog = ({
 
 const ConfigImpotsPage = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
+  const { currency, date } = useFormatters()
   const [taxes, setTaxes] = useState<Tax[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -161,7 +161,7 @@ const ConfigImpotsPage = () => {
         setHasMore(!!res.data.next)
       } catch {
         if (cancelled) return
-        setError('Impossible de charger les impôts.')
+        setError(t('configTaxes.loadError'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -170,6 +170,7 @@ const ConfigImpotsPage = () => {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, reloadKey])
 
   useEffect(() => {
@@ -187,7 +188,7 @@ const ConfigImpotsPage = () => {
           setHasMore(!!res.data.next)
           nextPageRef.current = page + 1
         } catch {
-          setError('Erreur lors du chargement.')
+          setError(t('configTaxes.loadMoreError'))
         } finally {
           busyRef.current = false
           setLoadingMore(false)
@@ -197,6 +198,7 @@ const ConfigImpotsPage = () => {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, id])
 
   const handleSaved = (message: string) => {
@@ -209,11 +211,10 @@ const ConfigImpotsPage = () => {
     <Box>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" fontWeight={700}>
-          Config — Impôts
+          {t('configTaxes.title')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Les montants sont calculés automatiquement (13,4% du CA encaissé par
-          trimestre).
+          {t('configTaxes.subtitle')}
         </Typography>
       </Box>
 
@@ -243,14 +244,18 @@ const ConfigImpotsPage = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Trimestre</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configTaxes.colQuarter')}
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Montant dû
+                    {t('configTaxes.colAmountDue')}
                   </TableCell>
                   <TableCell sx={{ fontWeight: 600 }}>
-                    Date de paiement
+                    {t('configTaxes.colPaymentDate')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Statut</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configTaxes.colStatus')}
+                  </TableCell>
                   <TableCell sx={{ width: 48 }} />
                 </TableRow>
               </TableHead>
@@ -262,7 +267,7 @@ const ConfigImpotsPage = () => {
                       align="center"
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
-                      Aucun impôt enregistré.
+                      {t('configTaxes.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -270,17 +275,21 @@ const ConfigImpotsPage = () => {
                     <TableRow key={tax.id} hover>
                       <TableCell>{tax.quarter}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 500 }}>
-                        {parseFloat(tax.amount).toFixed(2)} €
+                        {currency(tax.amount)}
                       </TableCell>
                       <TableCell>
-                        {tax.payment_date ? formatDate(tax.payment_date) : '—'}
+                        {tax.payment_date ? date(tax.payment_date) : '—'}
                       </TableCell>
                       <TableCell>
                         {tax.payment_date ? (
-                          <Chip label="Payé" color="success" size="small" />
+                          <Chip
+                            label={t('configTaxes.paid')}
+                            color="success"
+                            size="small"
+                          />
                         ) : (
                           <Chip
-                            label="En attente"
+                            label={t('configTaxes.pending')}
                             color="warning"
                             size="small"
                           />
@@ -290,15 +299,15 @@ const ConfigImpotsPage = () => {
                         <Tooltip
                           title={
                             tax.payment_date
-                              ? 'Impôt déjà payé — non modifiable'
-                              : 'Modifier'
+                              ? t('configTaxes.alreadyPaidTooltip')
+                              : t('common.edit')
                           }
                         >
                           <span>
                             <IconButton
                               size="small"
                               onClick={() => setEditingTax(tax)}
-                              aria-label="Modifier la date de paiement"
+                              aria-label={t('configTaxes.editAriaLabel')}
                               disabled={!!tax.payment_date}
                             >
                               <EditRounded fontSize="small" />
@@ -319,8 +328,9 @@ const ConfigImpotsPage = () => {
               color="text.secondary"
               sx={{ mt: 1, display: 'block' }}
             >
-              {taxes.length} trimestre{taxes.length > 1 ? 's' : ''}
-              {hasMore ? ' (faites défiler pour plus)' : ''}
+              {hasMore
+                ? t('configTaxes.countMore', { count: taxes.length })
+                : t('configTaxes.count', { count: taxes.length })}
             </Typography>
           )}
         </>

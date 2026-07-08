@@ -10,6 +10,7 @@ import {
   Alert,
   Paper,
 } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/useAuth'
 
 const SHOPIFY_PENDING_KEY = 'shopify_pending_params'
@@ -18,6 +19,7 @@ const LoginPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
+  const { t } = useTranslation()
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -53,7 +55,7 @@ const LoginPage = () => {
       if (data?.detail) {
         setError(data.detail)
       } else {
-        setError('Email ou mot de passe incorrect.')
+        setError(t('auth.loginError'))
       }
     } finally {
       setLoading(false)
@@ -72,12 +74,12 @@ const LoginPage = () => {
       >
         <Paper elevation={3} sx={{ p: 4, width: '100%' }}>
           <Typography variant="h5" component="h1" gutterBottom fontWeight={600}>
-            Connexion
+            {t('auth.loginTitle')}
           </Typography>
 
           {registeredSuccess && (
             <Alert severity="success" sx={{ mb: 2 }}>
-              Compte créé avec succès. Connectez-vous.
+              {t('auth.registeredSuccess')}
             </Alert>
           )}
 
@@ -89,7 +91,7 @@ const LoginPage = () => {
 
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <TextField
-              label="Email"
+              label={t('auth.email')}
               type="email"
               value={email}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -101,7 +103,7 @@ const LoginPage = () => {
               autoFocus
             />
             <TextField
-              label="Mot de passe"
+              label={t('auth.password')}
               type="password"
               value={password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -119,14 +121,14 @@ const LoginPage = () => {
               sx={{ mt: 3, mb: 2 }}
               disabled={loading}
             >
-              {loading ? 'Connexion…' : 'Se connecter'}
+              {loading ? t('auth.loginLoading') : t('auth.login')}
             </Button>
           </Box>
 
           <Typography variant="body2" align="center">
-            Pas encore de compte ?{' '}
+            {t('auth.noAccount')}{' '}
             <Link component={RouterLink} to="/register">
-              S'inscrire
+              {t('auth.signUp')}
             </Link>
           </Typography>
         </Paper>

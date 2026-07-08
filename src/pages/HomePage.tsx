@@ -13,6 +13,7 @@ import {
   Chip,
 } from '@mui/material'
 import { StorefrontRounded } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import { listStores } from '../api/stores'
 
 interface Store {
@@ -57,6 +58,7 @@ const StoreCard = ({ store }: StoreCardProps) => (
 )
 
 const HomePage = () => {
+  const { t } = useTranslation()
   const [stores, setStores] = useState<Store[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -67,18 +69,18 @@ const HomePage = () => {
         const response = await listStores()
         setStores(response.data.results as Store[])
       } catch {
-        setError('Impossible de charger les boutiques.')
+        setError(t('home.loadError'))
       } finally {
         setLoading(false)
       }
     }
     fetchStores()
-  }, [])
+  }, [t])
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4 }}>
       <Typography variant="h5" fontWeight={700} gutterBottom>
-        Mes boutiques
+        {t('home.title')}
       </Typography>
 
       {loading && (
@@ -95,7 +97,7 @@ const HomePage = () => {
 
       {!loading && !error && stores.length === 0 && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          Aucune boutique connectée. Initiez une connexion depuis Shopify.
+          {t('home.empty')}
         </Alert>
       )}
 

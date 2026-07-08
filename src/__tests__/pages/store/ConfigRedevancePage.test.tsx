@@ -136,7 +136,7 @@ describe('ConfigRedevancePage', () => {
       })
       renderPage()
       await waitFor(() => {
-        expect(screen.getByText('1234.56 €')).toBeInTheDocument()
+        expect(screen.getByText('1 234,56 €')).toBeInTheDocument()
       })
     })
 
@@ -150,7 +150,7 @@ describe('ConfigRedevancePage', () => {
       })
       renderPage()
       await waitFor(() => {
-        expect(screen.getByText('321.00 €')).toBeInTheDocument()
+        expect(screen.getByText('321,00 €')).toBeInTheDocument()
       })
     })
 
@@ -170,7 +170,7 @@ describe('ConfigRedevancePage', () => {
       })
       renderPage()
       await waitFor(() => {
-        expect(screen.getByText('134.50 €')).toBeInTheDocument()
+        expect(screen.getByText('134,50 €')).toBeInTheDocument()
       })
     })
 

@@ -28,6 +28,7 @@ import {
   Typography,
 } from '@mui/material'
 import { AddRounded, EditRounded } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import { createSupplier, listSuppliers } from '../../api/suppliers'
 import {
   createPurchase,
@@ -35,6 +36,7 @@ import {
   updatePurchase,
   type PurchasePayload,
 } from '../../api/purchases'
+import { useFormatters } from '../../i18n/useFormatters'
 
 interface Supplier {
   id: number
@@ -148,6 +150,7 @@ const PurchaseFormDialog = ({
   onSaved,
   onSupplierCreated,
 }: PurchaseFormDialogProps) => {
+  const { t } = useTranslation()
   const [supplierValue, setSupplierValue] = useState<SupplierOption | null>(
     () => buildInitialSupplier(mode, purchase, suppliers),
   )
@@ -205,7 +208,7 @@ const PurchaseFormDialog = ({
       }
       onSaved()
     } catch {
-      setError("L'enregistrement a échoué.")
+      setError(t('common.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -222,7 +225,9 @@ const PurchaseFormDialog = ({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {mode === 'create' ? 'Ajouter un achat' : "Modifier l'achat"}
+        {mode === 'create'
+          ? t('configPurchases.addButton')
+          : t('configPurchases.editPurchase')}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
@@ -249,7 +254,9 @@ const PurchaseFormDialog = ({
                 filtered.push({
                   inputValue: params.inputValue,
                   id: null,
-                  name: `Ajouter "${params.inputValue}"`,
+                  name: t('configPurchases.addSupplierOption', {
+                    name: params.inputValue,
+                  }),
                 })
               }
               return filtered
@@ -274,19 +281,23 @@ const PurchaseFormDialog = ({
               )
             }}
             renderInput={(params) => (
-              <TextField {...params} label="Fournisseur" required />
+              <TextField
+                {...params}
+                label={t('configPurchases.colSupplier')}
+                required
+              />
             )}
           />
 
           <TextField
-            label="Numéro de commande"
+            label={t('configPurchases.fieldOrderNumber')}
             value={form.order_number}
             onChange={(e) => setField('order_number', e.target.value)}
             fullWidth
           />
 
           <TextField
-            label="Date de commande"
+            label={t('configPurchases.fieldOrderDate')}
             type="date"
             value={form.order_date}
             onChange={(e) => setField('order_date', e.target.value)}
@@ -296,7 +307,7 @@ const PurchaseFormDialog = ({
           />
 
           <TextField
-            label="Prix"
+            label={t('configPurchases.colPrice')}
             type="number"
             value={form.price}
             onChange={(e) => setField('price', e.target.value)}
@@ -317,16 +328,16 @@ const PurchaseFormDialog = ({
                 onChange={(e) => setField('is_raw_material', e.target.checked)}
               />
             }
-            label="Matière première"
+            label={t('configPurchases.colRawMaterial')}
           />
 
           {mode === 'edit' && (
             <>
               <Typography variant="subtitle2" color="text.secondary">
-                Réception
+                {t('configPurchases.colReception')}
               </Typography>
               <TextField
-                label="Date de réception"
+                label={t('configPurchases.fieldReceptionDate')}
                 type="date"
                 value={form.reception_date}
                 onChange={(e) => setField('reception_date', e.target.value)}
@@ -342,7 +353,7 @@ const PurchaseFormDialog = ({
                     }
                   />
                 }
-                label="Réception contrôlée"
+                label={t('configPurchases.fieldReceptionChecked')}
               />
               <FormControlLabel
                 control={
@@ -353,14 +364,14 @@ const PurchaseFormDialog = ({
                     }
                   />
                 }
-                label="Pièces justificatives"
+                label={t('configPurchases.fieldSupportingDocs')}
               />
 
               <Typography variant="subtitle2" color="text.secondary">
-                Réclamation
+                {t('configPurchases.colClaim')}
               </Typography>
               <TextField
-                label="Réclamation"
+                label={t('configPurchases.colClaim')}
                 value={form.claim_text}
                 onChange={(e) => setField('claim_text', e.target.value)}
                 multiline
@@ -368,7 +379,7 @@ const PurchaseFormDialog = ({
                 fullWidth
               />
               <TextField
-                label="Date de réclamation"
+                label={t('configPurchases.fieldClaimDate')}
                 type="date"
                 value={form.claim_date}
                 onChange={(e) => setField('claim_date', e.target.value)}
@@ -376,7 +387,7 @@ const PurchaseFormDialog = ({
                 slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
-                label="Retour fournisseur"
+                label={t('configPurchases.fieldSupplierReturn')}
                 value={form.supplier_return_text}
                 onChange={(e) =>
                   setField('supplier_return_text', e.target.value)
@@ -386,7 +397,7 @@ const PurchaseFormDialog = ({
                 fullWidth
               />
               <TextField
-                label="Réclamation clôturée le"
+                label={t('configPurchases.fieldClaimClosedAt')}
                 type="date"
                 value={form.claim_closed_at}
                 onChange={(e) => setField('claim_closed_at', e.target.value)}
@@ -399,7 +410,7 @@ const PurchaseFormDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
-          Annuler
+          {t('common.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -409,7 +420,7 @@ const PurchaseFormDialog = ({
             saving ? <CircularProgress size={16} color="inherit" /> : undefined
           }
         >
-          {mode === 'create' ? 'Créer' : 'Enregistrer'}
+          {mode === 'create' ? t('common.create') : t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -418,6 +429,8 @@ const PurchaseFormDialog = ({
 
 const ConfigAchatPage = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
+  const { currency, date } = useFormatters()
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
   const [loading, setLoading] = useState(true)
@@ -446,8 +459,9 @@ const ConfigAchatPage = () => {
         setPurchases(purchaseList)
         setSuppliers(supplierList)
       })
-      .catch(() => setError('Impossible de charger les achats.'))
+      .catch(() => setError(t('configPurchases.loadError')))
       .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
 
   const supplierName = useMemo(() => {
@@ -470,7 +484,9 @@ const ConfigAchatPage = () => {
   const handleSaved = async () => {
     setDialogOpen(false)
     setSuccessMessage(
-      dialogMode === 'create' ? 'Achat créé avec succès.' : 'Achat mis à jour.',
+      dialogMode === 'create'
+        ? t('configPurchases.createSuccess')
+        : t('configPurchases.updateSuccess'),
     )
     await loadPurchases()
   }
@@ -492,14 +508,14 @@ const ConfigAchatPage = () => {
         }}
       >
         <Typography variant="h5" fontWeight={700}>
-          Config — Achat
+          {t('configPurchases.title')}
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddRounded />}
           onClick={openCreate}
         >
-          Ajouter un achat
+          {t('configPurchases.addButton')}
         </Button>
       </Box>
 
@@ -528,13 +544,27 @@ const ConfigAchatPage = () => {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 600 }}>Fournisseur</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>N° commande</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Prix</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Matière première</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Réception</TableCell>
-                <TableCell sx={{ fontWeight: 600 }}>Réclamation</TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configPurchases.colSupplier')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configPurchases.colOrderNumber')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configPurchases.colDate')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configPurchases.colPrice')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configPurchases.colRawMaterial')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configPurchases.colReception')}
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600 }}>
+                  {t('configPurchases.colClaim')}
+                </TableCell>
                 <TableCell sx={{ width: 48 }} />
               </TableRow>
             </TableHead>
@@ -546,7 +576,7 @@ const ConfigAchatPage = () => {
                     align="center"
                     sx={{ py: 4, color: 'text.secondary' }}
                   >
-                    Aucun achat. Cliquez sur "Ajouter un achat".
+                    {t('configPurchases.empty')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -554,20 +584,31 @@ const ConfigAchatPage = () => {
                   <TableRow key={purchase.id} hover>
                     <TableCell>{supplierName(purchase.supplier)}</TableCell>
                     <TableCell>{purchase.order_number || '—'}</TableCell>
-                    <TableCell>{purchase.order_date}</TableCell>
-                    <TableCell>{purchase.price} €</TableCell>
+                    <TableCell>{date(purchase.order_date)}</TableCell>
+                    <TableCell>{currency(purchase.price)}</TableCell>
                     <TableCell>
                       {purchase.is_raw_material ? (
-                        <Chip label="Oui" size="small" color="primary" />
+                        <Chip
+                          label={t('configPurchases.yes')}
+                          size="small"
+                          color="primary"
+                        />
                       ) : (
                         '—'
                       )}
                     </TableCell>
                     <TableCell>
                       {purchase.reception_checked ? (
-                        <Chip label="Contrôlée" size="small" color="success" />
+                        <Chip
+                          label={t('configPurchases.checked')}
+                          size="small"
+                          color="success"
+                        />
                       ) : purchase.reception_date ? (
-                        <Chip label="Reçu" size="small" />
+                        <Chip
+                          label={t('configPurchases.received')}
+                          size="small"
+                        />
                       ) : (
                         '—'
                       )}
@@ -576,7 +617,9 @@ const ConfigAchatPage = () => {
                       {purchase.claim_text ? (
                         <Chip
                           label={
-                            purchase.claim_closed_at ? 'Clôturée' : 'Ouverte'
+                            purchase.claim_closed_at
+                              ? t('configPurchases.closed')
+                              : t('configPurchases.open')
                           }
                           size="small"
                           color={
@@ -588,11 +631,11 @@ const ConfigAchatPage = () => {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Tooltip title="Modifier">
+                      <Tooltip title={t('common.edit')}>
                         <IconButton
                           size="small"
                           onClick={() => openEdit(purchase)}
-                          aria-label="Modifier l'achat"
+                          aria-label={t('configPurchases.editPurchase')}
                         >
                           <EditRounded fontSize="small" />
                         </IconButton>

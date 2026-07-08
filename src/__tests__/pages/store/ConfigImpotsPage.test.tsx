@@ -113,7 +113,7 @@ describe('ConfigImpotsPage', () => {
     })
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('134.50 €')).toBeInTheDocument()
+      expect(screen.getByText('134,50 €')).toBeInTheDocument()
     })
   })
 

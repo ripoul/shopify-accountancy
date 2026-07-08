@@ -26,12 +26,14 @@ import {
   Typography,
 } from '@mui/material'
 import { AddRounded, EditRounded, SavingsRounded } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import {
   createCashTransaction,
   listCashTransactions,
   updateCashTransaction,
 } from '../../api/transactions'
 import { listStores } from '../../api/stores'
+import { useFormatters } from '../../i18n/useFormatters'
 
 type CashTransactionSource = 'ORDER' | 'ADD_MONEY' | 'WITHDRAW_MONEY' | 'OTHER'
 
@@ -46,24 +48,18 @@ interface CashTransaction {
   order: number | null
 }
 
-const SOURCE_LABELS: Record<CashTransactionSource, string> = {
-  ORDER: 'Commande',
-  ADD_MONEY: "Ajout d'argent",
-  WITHDRAW_MONEY: "Retrait d'argent",
-  OTHER: 'Autre',
+const SOURCE_LABEL_KEYS: Record<CashTransactionSource, string> = {
+  ORDER: 'sourceOrder',
+  ADD_MONEY: 'sourceAddMoney',
+  WITHDRAW_MONEY: 'sourceWithdrawMoney',
+  OTHER: 'sourceOther',
 }
 
-const CREATE_SOURCE_OPTIONS: { value: CashTxCreateSource; label: string }[] = [
-  { value: 'WITHDRAW_MONEY', label: "Retrait d'argent" },
-  { value: 'OTHER', label: 'Autre' },
-]
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
+const CREATE_SOURCE_OPTIONS: { value: CashTxCreateSource; labelKey: string }[] =
+  [
+    { value: 'WITHDRAW_MONEY', labelKey: 'sourceWithdrawMoney' },
+    { value: 'OTHER', labelKey: 'sourceOther' },
+  ]
 
 interface TxFormDialogProps {
   open: boolean
@@ -84,6 +80,7 @@ const TxFormDialog = ({
   onClose,
   onSaved,
 }: TxFormDialogProps) => {
+  const { t } = useTranslation()
   const [createSource, setCreateSource] =
     useState<CashTxCreateSource>('WITHDRAW_MONEY')
   const [form, setForm] = useState(() =>
@@ -112,13 +109,13 @@ const TxFormDialog = ({
     try {
       if (mode === 'create') {
         await createCashTransaction(storePk, { source: createSource, ...form })
-        onSaved('Transaction créée avec succès.')
+        onSaved(t('configCash.createSuccess'))
       } else if (transaction) {
         await updateCashTransaction(storePk, transaction.id, form)
-        onSaved('Transaction mise à jour.')
+        onSaved(t('configCash.updateSuccess'))
       }
     } catch {
-      setError("L'enregistrement a échoué.")
+      setError(t('common.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -128,8 +125,8 @@ const TxFormDialog = ({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle>
         {mode === 'create'
-          ? 'Ajouter une transaction'
-          : 'Modifier la transaction'}
+          ? t('configCash.dialogTitleCreate')
+          : t('configCash.dialogTitleEdit')}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
@@ -137,7 +134,7 @@ const TxFormDialog = ({
           {mode === 'create' ? (
             <TextField
               select
-              label="Source"
+              label={t('configCash.colSource')}
               value={createSource}
               onChange={(e) =>
                 setCreateSource(e.target.value as CashTxCreateSource)
@@ -146,27 +143,29 @@ const TxFormDialog = ({
             >
               {CREATE_SOURCE_OPTIONS.map((opt) => (
                 <MenuItem key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(`configCash.${opt.labelKey}`)}
                 </MenuItem>
               ))}
             </TextField>
           ) : (
             <TextField
-              label="Source"
-              value={SOURCE_LABELS[transaction!.source] ?? transaction!.source}
+              label={t('configCash.colSource')}
+              value={t(`configCash.${SOURCE_LABEL_KEYS[transaction!.source]}`, {
+                defaultValue: transaction!.source,
+              })}
               disabled
               fullWidth
             />
           )}
           <TextField
-            label="Titre"
+            label={t('configCash.colTitle')}
             value={form.title}
             onChange={(e) => setField('title', e.target.value)}
             required
             fullWidth
           />
           <TextField
-            label="Date"
+            label={t('configCash.colDate')}
             type="date"
             value={form.date}
             onChange={(e) => setField('date', e.target.value)}
@@ -175,7 +174,7 @@ const TxFormDialog = ({
             slotProps={{ inputLabel: { shrink: true } }}
           />
           <TextField
-            label="Montant"
+            label={t('configCash.colAmount')}
             type="number"
             value={form.amount}
             onChange={(e) => setField('amount', e.target.value)}
@@ -192,7 +191,7 @@ const TxFormDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={saving}>
-          Annuler
+          {t('common.cancel')}
         </Button>
         <Button
           variant="contained"
@@ -202,7 +201,7 @@ const TxFormDialog = ({
             saving ? <CircularProgress size={16} color="inherit" /> : undefined
           }
         >
-          {mode === 'create' ? 'Créer' : 'Enregistrer'}
+          {mode === 'create' ? t('common.create') : t('common.save')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -211,6 +210,8 @@ const TxFormDialog = ({
 
 const ConfigCaissePage = () => {
   const { id } = useParams()
+  const { t } = useTranslation()
+  const { currency, date } = useFormatters()
   const [transactions, setTransactions] = useState<CashTransaction[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -254,7 +255,7 @@ const ConfigCaissePage = () => {
         setHasMore(!!res.data.next)
       } catch {
         if (cancelled) return
-        setError('Impossible de charger les transactions de caisse.')
+        setError(t('configCash.loadError'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -263,6 +264,7 @@ const ConfigCaissePage = () => {
     return () => {
       cancelled = true
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, reloadKey])
 
   useEffect(() => {
@@ -280,7 +282,7 @@ const ConfigCaissePage = () => {
           setHasMore(!!res.data.next)
           nextPageRef.current = page + 1
         } catch {
-          setError('Erreur lors du chargement.')
+          setError(t('configCash.loadMoreError'))
         } finally {
           busyRef.current = false
           setLoadingMore(false)
@@ -290,6 +292,7 @@ const ConfigCaissePage = () => {
     )
     observer.observe(sentinel)
     return () => observer.disconnect()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasMore, id])
 
   const openCreate = () => {
@@ -321,13 +324,15 @@ const ConfigCaissePage = () => {
         }}
       >
         <Typography variant="h5" fontWeight={700}>
-          Config — Caisse
+          {t('configCash.title')}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {cashAmount != null && (
             <Chip
               icon={<SavingsRounded />}
-              label={`Solde caisse : ${parseFloat(cashAmount).toFixed(2)} €`}
+              label={t('configCash.cashBalance', {
+                amount: currency(cashAmount),
+              })}
               color="primary"
               variant="outlined"
             />
@@ -337,7 +342,7 @@ const ConfigCaissePage = () => {
             startIcon={<AddRounded />}
             onClick={openCreate}
           >
-            Ajouter
+            {t('configCash.addButton')}
           </Button>
         </Box>
       </Box>
@@ -368,13 +373,21 @@ const ConfigCaissePage = () => {
             <Table size="small">
               <TableHead>
                 <TableRow>
-                  <TableCell sx={{ fontWeight: 600 }}>Date</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Titre</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Source</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }} align="right">
-                    Montant
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configCash.colDate')}
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>Commande</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configCash.colTitle')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configCash.colSource')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    {t('configCash.colAmount')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configCash.colOrder')}
+                  </TableCell>
                   <TableCell sx={{ width: 48 }} />
                 </TableRow>
               </TableHead>
@@ -386,16 +399,18 @@ const ConfigCaissePage = () => {
                       align="center"
                       sx={{ py: 4, color: 'text.secondary' }}
                     >
-                      Aucune transaction de caisse.
+                      {t('configCash.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (
                   transactions.map((tx) => (
                     <TableRow key={tx.id} hover>
-                      <TableCell>{formatDate(tx.date)}</TableCell>
+                      <TableCell>{date(tx.date)}</TableCell>
                       <TableCell>{tx.title}</TableCell>
                       <TableCell>
-                        {SOURCE_LABELS[tx.source] ?? tx.source}
+                        {t(`configCash.${SOURCE_LABEL_KEYS[tx.source]}`, {
+                          defaultValue: tx.source,
+                        })}
                       </TableCell>
                       <TableCell
                         align="right"
@@ -407,18 +422,17 @@ const ConfigCaissePage = () => {
                           fontWeight: 500,
                         }}
                       >
-                        {parseFloat(tx.amount) >= 0 ? '+' : ''}
-                        {parseFloat(tx.amount).toFixed(2)} €
+                        {currency(tx.amount, { signDisplay: 'exceptZero' })}
                       </TableCell>
                       <TableCell>
                         {tx.order != null ? `#${tx.order}` : '—'}
                       </TableCell>
                       <TableCell>
-                        <Tooltip title="Modifier">
+                        <Tooltip title={t('common.edit')}>
                           <IconButton
                             size="small"
                             onClick={() => openEdit(tx)}
-                            aria-label="Modifier la transaction"
+                            aria-label={t('configCash.dialogTitleEdit')}
                           >
                             <EditRounded fontSize="small" />
                           </IconButton>
@@ -437,9 +451,9 @@ const ConfigCaissePage = () => {
               color="text.secondary"
               sx={{ mt: 1, display: 'block' }}
             >
-              {transactions.length} transaction
-              {transactions.length > 1 ? 's' : ''}
-              {hasMore ? ' (faites défiler pour plus)' : ''}
+              {hasMore
+                ? t('configCash.countMore', { count: transactions.length })
+                : t('configCash.count', { count: transactions.length })}
             </Typography>
           )}
         </>

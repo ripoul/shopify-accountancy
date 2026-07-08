@@ -106,7 +106,7 @@ describe('ConfigAchatPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Acme')).toBeInTheDocument()
       expect(screen.getByText('CMD-1')).toBeInTheDocument()
-      expect(screen.getByText('99.90 €')).toBeInTheDocument()
+      expect(screen.getByText('99,90 €')).toBeInTheDocument()
     })
   })
 

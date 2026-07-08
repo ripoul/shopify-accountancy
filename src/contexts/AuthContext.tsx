@@ -1,5 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { login as apiLogin } from '../api/auth'
+import { getProfile } from '../api/profile'
+import i18n, { LANG_STORAGE_KEY } from '../i18n'
 import AuthContext from './auth-context'
 
 interface AuthProviderProps {
@@ -10,6 +12,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => !!localStorage.getItem('access_token'),
   )
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    getProfile()
+      .then(({ data }) => {
+        i18n.changeLanguage(data.lang)
+        localStorage.setItem(LANG_STORAGE_KEY, data.lang)
+      })
+      .catch(() => {})
+  }, [isAuthenticated])
 
   const login = useCallback(async (email: string, password: string) => {
     const response = await apiLogin(email, password)

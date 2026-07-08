@@ -149,7 +149,7 @@ describe('ConfigBankTransactionsPage', () => {
     })
     renderPage()
     await waitFor(() => {
-      expect(screen.getByText('+50.00 €')).toBeInTheDocument()
+      expect(screen.getByText('+50,00 €')).toBeInTheDocument()
     })
   })
 
@@ -165,7 +165,7 @@ describe('ConfigBankTransactionsPage', () => {
     renderPage()
     await waitFor(() => {
       expect(screen.getByText(/solde bancaire/i)).toBeInTheDocument()
-      expect(screen.getByText(/1234\.56/)).toBeInTheDocument()
+      expect(screen.getByText(/1 234,56/)).toBeInTheDocument()
     })
   })
 

@@ -1,12 +1,15 @@
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom'
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material'
 import { StorefrontRounded } from '@mui/icons-material'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/useAuth'
+import LanguageSwitcher from './LanguageSwitcher'
 
 const Navbar = () => {
   const { isAuthenticated, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
 
   const handleLogout = () => {
     logout()
@@ -17,20 +20,20 @@ const Navbar = () => {
     if (isAuthenticated) {
       return (
         <Button color="inherit" onClick={handleLogout}>
-          Se déconnecter
+          {t('nav.logout')}
         </Button>
       )
     }
     if (location.pathname === '/login') {
       return (
         <Button color="inherit" component={RouterLink} to="/register">
-          S'inscrire
+          {t('nav.register')}
         </Button>
       )
     }
     return (
       <Button color="inherit" component={RouterLink} to="/login">
-        Se connecter
+        {t('nav.login')}
       </Button>
     )
   }
@@ -52,7 +55,8 @@ const Navbar = () => {
         >
           Shopify Accountancy
         </Typography>
-        <Box>{rightAction()}</Box>
+        <LanguageSwitcher />
+        <Box sx={{ ml: 1 }}>{rightAction()}</Box>
       </Toolbar>
     </AppBar>
   )
