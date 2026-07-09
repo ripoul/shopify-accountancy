@@ -58,6 +58,7 @@ import {
 } from '../../api/orders'
 import { useFormatters } from '../../i18n/useFormatters'
 import type { LangCode } from '../../i18n'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -274,6 +275,9 @@ const OrderDetailPanel = ({
   const [deleteErrors, setDeleteErrors] = useState<Map<number, string>>(
     new Map(),
   )
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [confirmDeleteExpense, setConfirmDeleteExpense] =
+    useState<OrderExpense | null>(null)
   const [editingLineItem, setEditingLineItem] = useState<{
     id: number
     draft: string
@@ -371,6 +375,21 @@ const OrderDetailPanel = ({
         return next
       })
     }
+  }
+
+  const openDeleteConfirm = (expense: OrderExpense) => {
+    setConfirmDeleteExpense(expense)
+    setDeleteDialogOpen(true)
+  }
+
+  const closeDeleteConfirm = () => {
+    setDeleteDialogOpen(false)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (!confirmDeleteExpense) return
+    setDeleteDialogOpen(false)
+    handleDelete(confirmDeleteExpense.id)
   }
 
   return (
@@ -751,7 +770,7 @@ const OrderDetailPanel = ({
                               <span>
                                 <IconButton
                                   size="small"
-                                  onClick={() => handleDelete(expense.id)}
+                                  onClick={() => openDeleteConfirm(expense)}
                                   disabled={editing !== null}
                                   color="error"
                                   aria-label={t(
@@ -807,6 +826,26 @@ const OrderDetailPanel = ({
           )}
         </Box>
       </Stack>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title={t('configOrders.deleteExpenseConfirmTitle')}
+        message={t('configOrders.deleteExpenseConfirmMessage', {
+          type: confirmDeleteExpense
+            ? t(
+                `configOrders.${EXPENSE_TYPE_LABEL_KEYS[confirmDeleteExpense.type]}`,
+                { defaultValue: confirmDeleteExpense.type },
+              )
+            : '',
+        })}
+        warning={
+          confirmDeleteExpense?.type === 'DELIVERY'
+            ? t('configOrders.deleteExpenseWarningDelivery')
+            : undefined
+        }
+        onConfirm={handleDeleteConfirm}
+        onCancel={closeDeleteConfirm}
+      />
     </Box>
   )
 }

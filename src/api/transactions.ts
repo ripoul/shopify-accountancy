@@ -37,6 +37,9 @@ export const updateCashTransaction = (
   data: TransactionUpdatePayload,
 ) => client.patch(`/stores/${storeId}/cash-transactions/${txId}/`, data)
 
+export const deleteCashTransaction = (storeId: string, txId: number) =>
+  client.delete(`/stores/${storeId}/cash-transactions/${txId}/`)
+
 export const createBankTransaction = (
   storeId: string,
   data: BankTransactionCreatePayload,

@@ -9,6 +9,7 @@ import {
   listCashTransactions,
   createCashTransaction,
   updateCashTransaction,
+  deleteCashTransaction,
   createBankTransaction,
   updateBankTransaction,
   deleteBankTransaction,
@@ -115,6 +116,15 @@ describe('api/transactions', () => {
       deleteBankTransaction('5', 99)
       expect(client.delete).toHaveBeenCalledWith(
         '/stores/5/bank-transactions/99/',
+      )
+    })
+  })
+
+  describe('deleteCashTransaction', () => {
+    it('calls DELETE /stores/{id}/cash-transactions/{txId}/', () => {
+      deleteCashTransaction('5', 42)
+      expect(client.delete).toHaveBeenCalledWith(
+        '/stores/5/cash-transactions/42/',
       )
     })
   })

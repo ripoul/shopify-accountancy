@@ -216,8 +216,16 @@ export default {
     sourceOther: 'Other',
     dialogTitleCreate: 'Add a transaction',
     dialogTitleEdit: 'Edit transaction',
+    deleteAriaLabel: 'Delete transaction {{id}}',
+    deleteConfirmTitle: 'Delete transaction?',
+    deleteConfirmMessage:
+      'Are you sure you want to delete the transaction "{{title}}"? This action cannot be undone.',
+    deleteWarningBank:
+      "Don't forget to also delete the associated bank transaction if needed.",
     createSuccess: 'Transaction created successfully.',
     updateSuccess: 'Transaction updated.',
+    deleteSuccess: 'Transaction deleted successfully.',
+    deleteError: 'Error while deleting.',
     count_one: '{{count}} transaction',
     count_other: '{{count}} transactions',
     countMore_one: '{{count}} transaction (scroll for more)',
@@ -341,5 +349,10 @@ export default {
     editExpenseAriaLabel: 'Edit expense {{id}}',
     deleteExpenseAriaLabel: 'Delete expense {{id}}',
     deleteExpenseError: 'Error while deleting.',
+    deleteExpenseConfirmTitle: 'Delete expense?',
+    deleteExpenseConfirmMessage:
+      'Are you sure you want to delete this "{{type}}" expense? This action cannot be undone.',
+    deleteExpenseWarningDelivery:
+      "Don't forget to also delete the associated delivery bank transaction if needed.",
   },
 } satisfies Translations

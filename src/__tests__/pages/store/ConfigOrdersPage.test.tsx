@@ -678,7 +678,7 @@ describe('ConfigOrdersPage', () => {
     await waitFor(() => expect(screen.getByText('Updated')).toBeInTheDocument())
   })
 
-  it('deletes a MANUAL expense', async () => {
+  it('deletes a MANUAL expense after confirming', async () => {
     const expense = makeExpense(5)
     mockListOrders.mockResolvedValue({
       data: { results: [makeOrder(1)], next: null, count: 1 },
@@ -703,12 +703,117 @@ describe('ConfigOrdersPage', () => {
     fireEvent.click(
       screen.getByRole('button', { name: /supprimer la dépense 5/i }),
     )
+    await waitFor(() =>
+      expect(screen.getByText('Supprimer la dépense ?')).toBeInTheDocument(),
+    )
+    expect(mockDeleteOrderExpense).not.toHaveBeenCalled()
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
+    })
 
     await waitFor(() =>
       expect(screen.queryByText('Colissimo')).not.toBeInTheDocument(),
     )
     expect(mockDeleteOrderExpense).toHaveBeenCalledWith('1', 1, 5)
   })
+
+  it('does not delete when the confirmation dialog is cancelled', async () => {
+    const expense = makeExpense(5)
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    mockGetOrder.mockResolvedValue({
+      data: makeFullOrder(1, { expenses: [expense] }),
+    })
+
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /développer la commande #1001/i }),
+    )
+    await waitFor(() =>
+      expect(screen.getByText('Colissimo')).toBeInTheDocument(),
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /supprimer la dépense 5/i }),
+    )
+    await waitFor(() => screen.getByText('Supprimer la dépense ?'))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+
+    await waitFor(() =>
+      expect(
+        screen.queryByText('Supprimer la dépense ?'),
+      ).not.toBeInTheDocument(),
+    )
+    expect(mockDeleteOrderExpense).not.toHaveBeenCalled()
+    expect(screen.getByText('Colissimo')).toBeInTheDocument()
+  })
+
+  it('shows the delivery bank transaction warning for a DELIVERY expense', async () => {
+    const expense = makeExpense(5, { type: 'DELIVERY' })
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    mockGetOrder.mockResolvedValue({
+      data: makeFullOrder(1, { expenses: [expense] }),
+    })
+
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /développer la commande #1001/i }),
+    )
+    await waitFor(() =>
+      expect(screen.getByText('Colissimo')).toBeInTheDocument(),
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /supprimer la dépense 5/i }),
+    )
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/transaction bancaire de livraison associée/),
+      ).toBeInTheDocument(),
+    )
+  })
+
+  it.each(['PACKAGING', 'SHOPIFY_PAYMENT', 'OTHER'])(
+    'shows no warning for a %s expense',
+    async (type) => {
+      const expense = makeExpense(5, { type })
+      mockListOrders.mockResolvedValue({
+        data: { results: [makeOrder(1)], next: null, count: 1 },
+      })
+      mockGetOrder.mockResolvedValue({
+        data: makeFullOrder(1, { expenses: [expense] }),
+      })
+
+      renderPage()
+      await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /développer la commande #1001/i }),
+      )
+      await waitFor(() =>
+        expect(screen.getByText('Colissimo')).toBeInTheDocument(),
+      )
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /supprimer la dépense 5/i }),
+      )
+
+      await waitFor(() =>
+        expect(screen.getByText('Supprimer la dépense ?')).toBeInTheDocument(),
+      )
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    },
+  )
 
   it('shows error when delete fails', async () => {
     const expense = makeExpense(5)
@@ -733,6 +838,11 @@ describe('ConfigOrdersPage', () => {
     fireEvent.click(
       screen.getByRole('button', { name: /supprimer la dépense 5/i }),
     )
+    await waitFor(() => screen.getByText('Supprimer la dépense ?'))
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
+    })
 
     await waitFor(() =>
       expect(

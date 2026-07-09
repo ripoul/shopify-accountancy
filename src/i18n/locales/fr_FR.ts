@@ -214,8 +214,16 @@ const fr_FR = {
     sourceOther: 'Autre',
     dialogTitleCreate: 'Ajouter une transaction',
     dialogTitleEdit: 'Modifier la transaction',
+    deleteAriaLabel: 'Supprimer la transaction {{id}}',
+    deleteConfirmTitle: 'Supprimer la transaction ?',
+    deleteConfirmMessage:
+      'Voulez-vous vraiment supprimer la transaction « {{title}} » ? Cette action est irréversible.',
+    deleteWarningBank:
+      "N'oubliez pas de supprimer également la transaction bancaire associée si nécessaire.",
     createSuccess: 'Transaction créée avec succès.',
     updateSuccess: 'Transaction mise à jour.',
+    deleteSuccess: 'Transaction supprimée avec succès.',
+    deleteError: 'Erreur lors de la suppression.',
     count_one: '{{count}} transaction',
     count_other: '{{count}} transactions',
     countMore_one: '{{count}} transaction (faites défiler pour plus)',
@@ -342,6 +350,11 @@ const fr_FR = {
     editExpenseAriaLabel: 'Modifier la dépense {{id}}',
     deleteExpenseAriaLabel: 'Supprimer la dépense {{id}}',
     deleteExpenseError: 'Erreur lors de la suppression.',
+    deleteExpenseConfirmTitle: 'Supprimer la dépense ?',
+    deleteExpenseConfirmMessage:
+      'Voulez-vous vraiment supprimer cette dépense de type « {{type}} » ? Cette action est irréversible.',
+    deleteExpenseWarningDelivery:
+      "N'oubliez pas de supprimer également la transaction bancaire de livraison associée si nécessaire.",
   },
 }
 
