@@ -14,6 +14,7 @@ vi.mock('../../../api/transactions', () => ({
   listCashTransactions: vi.fn(),
   createBankTransaction: vi.fn(),
   updateBankTransaction: vi.fn(),
+  deleteBankTransaction: vi.fn(),
 }))
 
 vi.mock('../../../api/stores', () => ({
@@ -25,6 +26,7 @@ import {
   listBankTransactions,
   createBankTransaction,
   updateBankTransaction,
+  deleteBankTransaction,
 } from '../../../api/transactions'
 import { listStores } from '../../../api/stores'
 
@@ -34,6 +36,8 @@ const mockListBankTransactions = listBankTransactions as any
 const mockCreateBankTransaction = createBankTransaction as any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockUpdateBankTransaction = updateBankTransaction as any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockDeleteBankTransaction = deleteBankTransaction as any
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockListStores = listStores as any
 
@@ -521,6 +525,223 @@ describe('ConfigBankTransactionsPage', () => {
         date: '2024-01-01',
         amount: '100.00',
       })
+    })
+  })
+
+  describe('delete confirmation', () => {
+    it.each(['ORDER'])(
+      'hides delete button for %s-sourced transactions',
+      async (source) => {
+        mockListBankTransactions.mockResolvedValue({
+          data: { results: [makeTx(1, { source })], next: null, count: 1 },
+        })
+        renderPage()
+        await waitFor(() => screen.getByText('Transaction 1'))
+        expect(
+          screen.queryByLabelText('Supprimer la transaction 1'),
+        ).not.toBeInTheDocument()
+      },
+    )
+
+    it.each([
+      'FILL_CASHBOX',
+      'OTHER',
+      'PURCHASE',
+      'ORDER_DELIVERY',
+      'EMPTY_CASHBOX',
+    ])('shows delete button for %s-sourced transactions', async (source) => {
+      mockListBankTransactions.mockResolvedValue({
+        data: { results: [makeTx(1, { source })], next: null, count: 1 },
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Transaction 1'))
+      expect(
+        screen.getByLabelText('Supprimer la transaction 1'),
+      ).toBeInTheDocument()
+    })
+
+    it('opens confirmation dialog with the transaction title', async () => {
+      mockListBankTransactions.mockResolvedValue({
+        data: {
+          results: [makeTx(1, { title: 'Ma BT', source: 'OTHER' })],
+          next: null,
+          count: 1,
+        },
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Ma BT'))
+      fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+
+      await waitFor(() =>
+        expect(
+          screen.getByText('Supprimer la transaction ?'),
+        ).toBeInTheDocument(),
+      )
+      expect(
+        screen.getByText(/Voulez-vous vraiment supprimer la transaction/),
+      ).toHaveTextContent('Ma BT')
+    })
+
+    it.each(['FILL_CASHBOX', 'EMPTY_CASHBOX'])(
+      'shows the cash warning for %s transactions',
+      async (source) => {
+        mockListBankTransactions.mockResolvedValue({
+          data: {
+            results: [makeTx(1, { source })],
+            next: null,
+            count: 1,
+          },
+        })
+        renderPage()
+        await waitFor(() => screen.getByText('Transaction 1'))
+        fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+
+        await waitFor(() =>
+          expect(
+            screen.getByText(/transaction de caisse associée/),
+          ).toBeInTheDocument(),
+        )
+      },
+    )
+
+    it('shows the purchase warning for PURCHASE transactions', async () => {
+      mockListBankTransactions.mockResolvedValue({
+        data: {
+          results: [makeTx(1, { source: 'PURCHASE' })],
+          next: null,
+          count: 1,
+        },
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Transaction 1'))
+      fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+
+      await waitFor(() =>
+        expect(screen.getByText(/achat associé/)).toBeInTheDocument(),
+      )
+    })
+
+    it('shows the delivery expense warning for ORDER_DELIVERY transactions', async () => {
+      mockListBankTransactions.mockResolvedValue({
+        data: {
+          results: [makeTx(1, { source: 'ORDER_DELIVERY' })],
+          next: null,
+          count: 1,
+        },
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Transaction 1'))
+      fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(/dépense de livraison associée/),
+        ).toBeInTheDocument(),
+      )
+    })
+
+    it('shows no warning for OTHER transactions', async () => {
+      mockListBankTransactions.mockResolvedValue({
+        data: {
+          results: [makeTx(1, { source: 'OTHER' })],
+          next: null,
+          count: 1,
+        },
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Transaction 1'))
+      fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+
+      await waitFor(() =>
+        expect(
+          screen.getByText('Supprimer la transaction ?'),
+        ).toBeInTheDocument(),
+      )
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('closes the dialog without calling the API on Annuler', async () => {
+      mockListBankTransactions.mockResolvedValue({
+        data: {
+          results: [makeTx(1, { source: 'OTHER' })],
+          next: null,
+          count: 1,
+        },
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Transaction 1'))
+      fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+      await waitFor(() => screen.getByText('Supprimer la transaction ?'))
+
+      fireEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+
+      await waitFor(() =>
+        expect(
+          screen.queryByText('Supprimer la transaction ?'),
+        ).not.toBeInTheDocument(),
+      )
+      expect(mockDeleteBankTransaction).not.toHaveBeenCalled()
+    })
+
+    it('deletes the transaction and shows a success message on confirm', async () => {
+      mockDeleteBankTransaction.mockResolvedValue({ data: {} })
+      mockListBankTransactions
+        .mockResolvedValueOnce({
+          data: {
+            results: [makeTx(1, { title: 'Ma BT', source: 'OTHER' })],
+            next: null,
+            count: 1,
+          },
+        })
+        .mockResolvedValueOnce({ data: { results: [], next: null, count: 0 } })
+
+      renderPage()
+      await waitFor(() => screen.getByText('Ma BT'))
+      fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+      await waitFor(() => screen.getByText('Supprimer la transaction ?'))
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
+      })
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(/transaction supprimée avec succès/i),
+        ).toBeInTheDocument(),
+      )
+      expect(mockDeleteBankTransaction).toHaveBeenCalledWith('1', 1)
+      await waitFor(() =>
+        expect(
+          screen.queryByText('Supprimer la transaction ?'),
+        ).not.toBeInTheDocument(),
+      )
+    })
+
+    it('shows an error in the dialog and keeps it open when delete fails', async () => {
+      mockDeleteBankTransaction.mockRejectedValue(new Error('fail'))
+      mockListBankTransactions.mockResolvedValue({
+        data: {
+          results: [makeTx(1, { source: 'OTHER' })],
+          next: null,
+          count: 1,
+        },
+      })
+
+      renderPage()
+      await waitFor(() => screen.getByText('Transaction 1'))
+      fireEvent.click(screen.getByLabelText('Supprimer la transaction 1'))
+      await waitFor(() => screen.getByText('Supprimer la transaction ?'))
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Supprimer' }))
+      })
+
+      await waitFor(() =>
+        expect(
+          screen.getByText(/erreur lors de la suppression/i),
+        ).toBeInTheDocument(),
+      )
+      expect(screen.getByText('Supprimer la transaction ?')).toBeInTheDocument()
     })
   })
 })

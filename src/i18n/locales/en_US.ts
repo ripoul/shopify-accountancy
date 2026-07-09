@@ -175,10 +175,24 @@ export default {
     sourceEmptyCashbox: 'Empty cashbox',
     sourceFillCashbox: 'Fill cashbox',
     sourceOther: 'Other',
+    sourcePurchase: 'Purchase',
+    sourceOrderDelivery: 'Delivery fees',
     dialogTitleCreate: 'Add a transaction',
     dialogTitleEdit: 'Edit transaction',
+    deleteAriaLabel: 'Delete transaction {{id}}',
+    deleteConfirmTitle: 'Delete transaction?',
+    deleteConfirmMessage:
+      'Are you sure you want to delete the transaction "{{title}}"? This action cannot be undone.',
+    deleteWarningCash:
+      "Don't forget to also delete the associated cash transaction if needed.",
+    deleteWarningPurchase:
+      "Don't forget to also delete the associated purchase if needed.",
+    deleteWarningOrderDelivery:
+      "Don't forget to also delete the associated delivery expense on the order.",
     createSuccess: 'Transaction created successfully.',
     updateSuccess: 'Transaction updated.',
+    deleteSuccess: 'Transaction deleted successfully.',
+    deleteError: 'Error while deleting.',
     count_one: '{{count}} transaction',
     count_other: '{{count}} transactions',
     countMore_one: '{{count}} transaction (scroll for more)',

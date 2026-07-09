@@ -47,3 +47,6 @@ export const updateBankTransaction = (
   txId: number,
   data: TransactionUpdatePayload,
 ) => client.patch(`/stores/${storeId}/bank-transactions/${txId}/`, data)
+
+export const deleteBankTransaction = (storeId: string, txId: number) =>
+  client.delete(`/stores/${storeId}/bank-transactions/${txId}/`)

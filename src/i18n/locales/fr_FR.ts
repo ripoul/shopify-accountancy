@@ -173,10 +173,24 @@ const fr_FR = {
     sourceEmptyCashbox: 'Vidage caisse',
     sourceFillCashbox: 'Alimentation caisse',
     sourceOther: 'Autre',
+    sourcePurchase: 'Achat',
+    sourceOrderDelivery: 'Frais de livraison',
     dialogTitleCreate: 'Ajouter une transaction',
     dialogTitleEdit: 'Modifier la transaction',
+    deleteAriaLabel: 'Supprimer la transaction {{id}}',
+    deleteConfirmTitle: 'Supprimer la transaction ?',
+    deleteConfirmMessage:
+      'Voulez-vous vraiment supprimer la transaction « {{title}} » ? Cette action est irréversible.',
+    deleteWarningCash:
+      "N'oubliez pas de supprimer également la transaction de caisse associée si nécessaire.",
+    deleteWarningPurchase:
+      "N'oubliez pas de supprimer également l'achat associé si nécessaire.",
+    deleteWarningOrderDelivery:
+      "N'oubliez pas de supprimer également la dépense de livraison associée sur la commande.",
     createSuccess: 'Transaction créée avec succès.',
     updateSuccess: 'Transaction mise à jour.',
+    deleteSuccess: 'Transaction supprimée avec succès.',
+    deleteError: 'Erreur lors de la suppression.',
     count_one: '{{count}} transaction',
     count_other: '{{count}} transactions',
     countMore_one: '{{count}} transaction (faites défiler pour plus)',

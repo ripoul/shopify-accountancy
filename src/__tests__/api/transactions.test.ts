@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('../../api/client', () => ({
-  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }))
 
 import {
@@ -11,6 +11,7 @@ import {
   updateCashTransaction,
   createBankTransaction,
   updateBankTransaction,
+  deleteBankTransaction,
 } from '../../api/transactions'
 import client from '../../api/client'
 
@@ -105,6 +106,15 @@ describe('api/transactions', () => {
       expect(client.patch).toHaveBeenCalledWith(
         '/stores/5/bank-transactions/99/',
         payload,
+      )
+    })
+  })
+
+  describe('deleteBankTransaction', () => {
+    it('calls DELETE /stores/{id}/bank-transactions/{txId}/', () => {
+      deleteBankTransaction('5', 99)
+      expect(client.delete).toHaveBeenCalledWith(
+        '/stores/5/bank-transactions/99/',
       )
     })
   })
