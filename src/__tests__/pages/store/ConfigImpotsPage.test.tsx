@@ -103,6 +103,19 @@ describe('ConfigImpotsPage', () => {
     })
   })
 
+  it('alternates row background color', async () => {
+    mockListTaxes.mockResolvedValue({
+      data: { results: [makeTax(1), makeTax(2)], next: null, count: 2 },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('Q2 2024'))
+
+    const rows = screen.getAllByRole('row')
+    const [firstRow, secondRow] = rows.slice(1)
+    expect(secondRow).toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+    expect(firstRow).not.toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+  })
+
   it('formats amount with 2 decimal places', async () => {
     mockListTaxes.mockResolvedValue({
       data: {

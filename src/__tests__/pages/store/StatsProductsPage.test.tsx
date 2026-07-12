@@ -138,6 +138,21 @@ describe('StatsProductsPage', () => {
       expect(screen.getByText('42')).toBeInTheDocument()
     })
 
+    it('alternates row background color', async () => {
+      mockGetProductStats.mockResolvedValue({
+        data: [makeProduct(), makeProduct({ id: 2, title: 'T-shirt rouge' })],
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('T-shirt rouge'))
+
+      const rows = screen.getAllByRole('row')
+      const [firstRow, secondRow] = rows.slice(1)
+      expect(secondRow).toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+      expect(firstRow).not.toHaveStyle({
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      })
+    })
+
     it('all columns are sortable', async () => {
       mockGetProductStats.mockResolvedValue({ data: [makeProduct()] })
       renderPage()

@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next'
 import { listRoyalties, updateRoyalty } from '../../api/royalties'
 import { getStore, updateStore } from '../../api/stores'
 import { useFormatters } from '../../i18n/useFormatters'
+import { stripedRowSx } from '../../utils/tableStyles'
 
 interface Royalty {
   id: number
@@ -394,8 +395,8 @@ const ConfigRedevancePage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  royalties.map((royalty) => (
-                    <TableRow key={royalty.id} hover>
+                  royalties.map((royalty, index) => (
+                    <TableRow key={royalty.id} hover sx={stripedRowSx(index)}>
                       <TableCell>{royalty.quarter}</TableCell>
                       <TableCell align="right">
                         {currency(royalty.sum_after_tax_result)}

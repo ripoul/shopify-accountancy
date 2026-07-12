@@ -126,6 +126,23 @@ describe('ConfigCaissePage', () => {
     })
   })
 
+  it('alternates row background color', async () => {
+    mockListCashTransactions.mockResolvedValue({
+      data: {
+        results: [makeTx(1), makeTx(2)],
+        next: null,
+        count: 2,
+      },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('Caisse 2'))
+
+    const rows = screen.getAllByRole('row')
+    const [firstRow, secondRow] = rows.slice(1)
+    expect(secondRow).toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+    expect(firstRow).not.toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+  })
+
   it('displays ADD_MONEY source label in French', async () => {
     mockListCashTransactions.mockResolvedValue({
       data: {

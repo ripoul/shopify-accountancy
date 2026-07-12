@@ -37,6 +37,7 @@ import {
   type PurchasePayload,
 } from '../../api/purchases'
 import { useFormatters } from '../../i18n/useFormatters'
+import { stripedRowSx } from '../../utils/tableStyles'
 
 interface Supplier {
   id: number
@@ -580,8 +581,8 @@ const ConfigAchatPage = () => {
                   </TableCell>
                 </TableRow>
               ) : (
-                purchases.map((purchase) => (
-                  <TableRow key={purchase.id} hover>
+                purchases.map((purchase, index) => (
+                  <TableRow key={purchase.id} hover sx={stripedRowSx(index)}>
                     <TableCell>{supplierName(purchase.supplier)}</TableCell>
                     <TableCell>{purchase.order_number || '—'}</TableCell>
                     <TableCell>{date(purchase.order_date)}</TableCell>

@@ -59,6 +59,13 @@ const mockPurchase = {
   updated_at: '2024-01-01T00:00:00Z',
 }
 
+const mockPurchase2 = {
+  ...mockPurchase,
+  id: 102,
+  order_number: 'CMD-2',
+  price: '49.90',
+}
+
 const renderPage = () =>
   render(
     <MemoryRouter initialEntries={['/store/1/config/purchases']}>
@@ -108,6 +115,19 @@ describe('ConfigAchatPage', () => {
       expect(screen.getByText('CMD-1')).toBeInTheDocument()
       expect(screen.getByText('99,90 €')).toBeInTheDocument()
     })
+  })
+
+  it('alternates row background color', async () => {
+    mockListPurchases.mockResolvedValue({
+      data: { results: [mockPurchase, mockPurchase2], next: null },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('CMD-2'))
+
+    const rows = screen.getAllByRole('row')
+    const [firstRow, secondRow] = rows.slice(1)
+    expect(secondRow).toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+    expect(firstRow).not.toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
   })
 
   it('shows empty state when no purchases', async () => {

@@ -172,6 +172,25 @@ describe('ConfigOrdersPage', () => {
     })
   })
 
+  it('alternates row background color', async () => {
+    mockListOrders.mockResolvedValue({
+      data: {
+        results: [makeOrder(1), makeOrder(2)],
+        next: null,
+        count: 2,
+      },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('#1002'))
+
+    const firstRow = screen.getByText('#1001').closest('tr')
+    const secondRow = screen.getByText('#1002').closest('tr')
+    expect(secondRow).toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+    expect(firstRow).not.toHaveStyle({
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    })
+  })
+
   // ── Import ───────────────────────────────────────────────────────────────────
 
   it('calls importOrders on button click and reloads list', async () => {

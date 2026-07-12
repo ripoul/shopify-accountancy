@@ -59,6 +59,7 @@ import {
 import { useFormatters } from '../../i18n/useFormatters'
 import type { LangCode } from '../../i18n'
 import ConfirmDialog from '../../components/ConfirmDialog'
+import { stripedRowSx } from '../../utils/tableStyles'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1409,7 +1410,7 @@ const ConfigOrdersPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => {
+                  orders.map((order, index) => {
                     const expanded = expandedIds.has(order.id)
                     const isLoadingDetail = loadingDetailIds.has(order.id)
                     const detailError = detailErrors.get(order.id)
@@ -1423,7 +1424,7 @@ const ConfigOrdersPage = () => {
                           key={order.id}
                           hover
                           onClick={() => toggleExpand(order)}
-                          sx={{ cursor: 'pointer' }}
+                          sx={{ ...stripedRowSx(index), cursor: 'pointer' }}
                         >
                           <TableCell
                             sx={{ p: 0.5, textAlign: 'center' }}

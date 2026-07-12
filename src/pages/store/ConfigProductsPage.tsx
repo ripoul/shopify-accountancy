@@ -39,6 +39,7 @@ import {
   updateVariant,
 } from '../../api/products'
 import { listStores } from '../../api/stores'
+import { stripedRowSx } from '../../utils/tableStyles'
 
 interface ProductVariant {
   id: number
@@ -492,7 +493,7 @@ const ConfigProductsPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredProducts.map((product) => {
+                  filteredProducts.map((product, index) => {
                     const expanded = expandedIds.has(product.id)
                     return (
                       <>
@@ -500,7 +501,7 @@ const ConfigProductsPage = () => {
                           key={product.id}
                           hover
                           onClick={() => toggleExpand(product.id)}
-                          sx={{ cursor: 'pointer' }}
+                          sx={{ ...stripedRowSx(index), cursor: 'pointer' }}
                         >
                           <TableCell sx={{ p: 0.5, textAlign: 'center' }}>
                             <KeyboardArrowDownRounded

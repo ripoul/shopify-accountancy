@@ -40,6 +40,7 @@ import {
 } from '../../api/transactions'
 import { listStores } from '../../api/stores'
 import { useFormatters } from '../../i18n/useFormatters'
+import { stripedRowSx } from '../../utils/tableStyles'
 import ConfirmDialog from '../../components/ConfirmDialog'
 
 type CashTransactionSource = 'ORDER' | 'ADD_MONEY' | 'WITHDRAW_MONEY' | 'OTHER'
@@ -454,8 +455,8 @@ const ConfigCaissePage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  transactions.map((tx) => (
-                    <TableRow key={tx.id} hover>
+                  transactions.map((tx, index) => (
+                    <TableRow key={tx.id} hover sx={stripedRowSx(index)}>
                       <TableCell>{date(tx.date)}</TableCell>
                       <TableCell>{tx.title}</TableCell>
                       <TableCell>

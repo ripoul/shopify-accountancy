@@ -136,6 +136,22 @@ describe('ConfigProductsPage', () => {
     })
   })
 
+  it('alternates row background color', async () => {
+    mockListProducts.mockResolvedValue({
+      data: { results: [mockProduct, mockProduct2], next: null },
+    })
+    renderPage()
+    await waitFor(() => screen.getByText('Hoodie Red'))
+
+    // sorted alphabetically: "Hoodie Red" (index 0) before "T-Shirt Blue" (index 1)
+    const firstRow = screen.getByText('Hoodie Red').closest('tr')
+    const secondRow = screen.getByText('T-Shirt Blue').closest('tr')
+    expect(secondRow).toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+    expect(firstRow).not.toHaveStyle({
+      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+    })
+  })
+
   it('shows empty state message when no products', async () => {
     mockListProducts.mockResolvedValue({ data: { results: [], next: null } })
     renderPage()

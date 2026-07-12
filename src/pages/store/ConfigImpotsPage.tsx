@@ -28,6 +28,7 @@ import { EditRounded } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { listTaxes, updateTax } from '../../api/taxes'
 import { useFormatters } from '../../i18n/useFormatters'
+import { stripedRowSx } from '../../utils/tableStyles'
 
 interface Tax {
   id: number
@@ -271,8 +272,8 @@ const ConfigImpotsPage = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  taxes.map((tax) => (
-                    <TableRow key={tax.id} hover>
+                  taxes.map((tax, index) => (
+                    <TableRow key={tax.id} hover sx={stripedRowSx(index)}>
                       <TableCell>{tax.quarter}</TableCell>
                       <TableCell align="right" sx={{ fontWeight: 500 }}>
                         {currency(tax.amount)}

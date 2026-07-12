@@ -30,6 +30,7 @@ import {
   type VariantStats,
 } from '../../api/products'
 import { useFormatters } from '../../i18n/useFormatters'
+import { stripedRowSx } from '../../utils/tableStyles'
 
 interface Collection {
   id: number
@@ -293,8 +294,8 @@ const StatsProductsPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {sortedRows.map((row) => (
-                <TableRow key={row.id} hover>
+              {sortedRows.map((row, index) => (
+                <TableRow key={row.id} hover sx={stripedRowSx(index)}>
                   {mode === 'variant' && (
                     <TableCell>{(row as VariantStats).product_title}</TableCell>
                   )}

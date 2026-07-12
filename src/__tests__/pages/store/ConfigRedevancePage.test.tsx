@@ -126,6 +126,25 @@ describe('ConfigRedevancePage', () => {
       })
     })
 
+    it('alternates row background color', async () => {
+      mockListRoyalties.mockResolvedValue({
+        data: {
+          results: [makeRoyalty(1), makeRoyalty(2)],
+          next: null,
+          count: 2,
+        },
+      })
+      renderPage()
+      await waitFor(() => screen.getByText('Q2 2024'))
+
+      const rows = screen.getAllByRole('row')
+      const [firstRow, secondRow] = rows.slice(1)
+      expect(secondRow).toHaveStyle({ backgroundColor: 'rgba(0, 0, 0, 0.04)' })
+      expect(firstRow).not.toHaveStyle({
+        backgroundColor: 'rgba(0, 0, 0, 0.04)',
+      })
+    })
+
     it('displays sum_after_tax_result column', async () => {
       mockListRoyalties.mockResolvedValue({
         data: {
