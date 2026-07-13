@@ -88,6 +88,21 @@ interface OrderExpense {
   label: string
 }
 
+interface ReturnLineItem {
+  id: number
+  title: string
+  quantity: number
+  amount: string
+}
+
+interface OrderReturn {
+  id: number
+  name: string
+  status: string
+  amount: string
+  line_items: ReturnLineItem[]
+}
+
 interface Order {
   id: number
   external_id: string
@@ -106,6 +121,8 @@ interface FullOrder extends Order {
   line_items: OrderLineItem[]
   discounts: OrderDiscount[]
   expenses: OrderExpense[]
+  returns: OrderReturn[]
+  total_returns: string
 }
 
 interface ExpenseFormData {
@@ -629,6 +646,69 @@ const OrderDetailPanel = ({
                     </TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+          </Box>
+        )}
+
+        {/* Retours */}
+        {order.returns.length > 0 && (
+          <Box>
+            <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+              {t('configOrders.returnsTitle')}
+            </Typography>
+            <Table size="small" component={Paper} variant="outlined">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configOrders.colNumber')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configOrders.colStatus')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {t('configOrders.colArticles')}
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 600 }} align="right">
+                    {t('configOrders.colAmount')}
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {order.returns.map((orderReturn) => (
+                  <TableRow key={orderReturn.id}>
+                    <TableCell>{orderReturn.name}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={orderReturn.status}
+                        size="small"
+                        variant="outlined"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {orderReturn.line_items.length > 0
+                        ? orderReturn.line_items
+                            .map((item) => `${item.title} ×${item.quantity}`)
+                            .join(', ')
+                        : '—'}
+                    </TableCell>
+                    <TableCell align="right" sx={{ color: 'error.main' }}>
+                      -{currency(orderReturn.amount)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+                <TableRow
+                  sx={{
+                    borderTop: '2px solid',
+                    borderColor: 'divider',
+                    '& td': { fontWeight: 600 },
+                  }}
+                >
+                  <TableCell colSpan={3}>{t('configOrders.total')}</TableCell>
+                  <TableCell align="right" sx={{ color: 'error.main' }}>
+                    -{currency(order.total_returns)}
+                  </TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </Box>

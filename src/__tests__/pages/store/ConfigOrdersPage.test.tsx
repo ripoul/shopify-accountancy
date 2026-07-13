@@ -80,6 +80,8 @@ const makeFullOrder = (id: number, overrides = {}) => ({
   ],
   discounts: [],
   expenses: [],
+  returns: [],
+  total_returns: '0.00',
   ...overrides,
 })
 
@@ -548,6 +550,61 @@ describe('ConfigOrdersPage', () => {
       expect(screen.getByText('Articles')).toBeInTheDocument(),
     )
     expect(screen.queryByText('Remises')).not.toBeInTheDocument()
+  })
+
+  it('shows returns section when order has returns', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    mockGetOrder.mockResolvedValue({
+      data: makeFullOrder(1, {
+        returns: [
+          {
+            id: 1,
+            name: '#1001-R1',
+            status: 'CLOSED',
+            amount: '15.00',
+            line_items: [
+              { id: 1, title: 'T-Shirt S/Blue', quantity: 1, amount: '15.00' },
+            ],
+          },
+        ],
+        total_returns: '15.00',
+      }),
+    })
+
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /développer la commande #1001/i }),
+    )
+    await waitFor(() =>
+      expect(screen.getByText('#1001-R1')).toBeInTheDocument(),
+    )
+    expect(screen.getByText('Retours')).toBeInTheDocument()
+    expect(screen.getByText('CLOSED')).toBeInTheDocument()
+    expect(screen.getByText('T-Shirt S/Blue ×1')).toBeInTheDocument()
+  })
+
+  it('hides returns section when order has no returns', async () => {
+    mockListOrders.mockResolvedValue({
+      data: { results: [makeOrder(1)], next: null, count: 1 },
+    })
+    mockGetOrder.mockResolvedValue({
+      data: makeFullOrder(1, { returns: [] }),
+    })
+
+    renderPage()
+    await waitFor(() => expect(screen.getByText('#1001')).toBeInTheDocument())
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /développer la commande #1001/i }),
+    )
+    await waitFor(() =>
+      expect(screen.getByText('Articles')).toBeInTheDocument(),
+    )
+    expect(screen.queryByText('Retours')).not.toBeInTheDocument()
   })
 
   // ── Expense CRUD ──────────────────────────────────────────────────────────────
