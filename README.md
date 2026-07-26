@@ -53,43 +53,25 @@ The app is served at `http://localhost:5173` with Vite HMR enabled.
 
 ## Pre-commit hooks
 
-This project uses [pre-commit](https://pre-commit.com/) to enforce code quality before every commit.
-
-### Install pre-commit
-
-```bash
-# macOS
-brew install pre-commit
-
-# or via pip
-pip install pre-commit
-```
+This project uses [Husky](https://typicode.github.io/husky/) and [lint-staged](https://github.com/lint-staged/lint-staged) to enforce code quality before every commit.
 
 ### Register the hooks
 
-Run this once after cloning:
-
-```bash
-pre-commit install
-```
+Nothing to do — the hook is installed automatically by the `prepare` script when you run `pnpm install`.
 
 ### What the hooks do
 
-On every `git commit`, the following checks run automatically on staged files:
+On every `git commit`, the following run automatically against staged files only:
 
-| Hook | What it does |
+| Check | What it does |
 |---|---|
-| `trailing-whitespace` | Strips trailing whitespace |
-| `end-of-file-fixer` | Ensures files end with a newline |
-| `check-yaml` | Validates YAML syntax |
-| `check-json` | Validates JSON syntax |
 | `eslint --fix` | Lints and auto-fixes TypeScript/TSX files (zero warnings allowed) |
-| `prettier --write` | Formats source files |
+| `prettier --write` | Formats source, config, markup, and doc files |
 
-You can also run all hooks manually against every file:
+You can also run the same checks manually against whatever is currently staged:
 
 ```bash
-pre-commit run --all-files
+pnpm exec lint-staged
 ```
 
 ---
@@ -124,4 +106,4 @@ pnpm lint
 pnpm exec prettier --write .
 ```
 
-Both are also applied automatically by the pre-commit hooks on staged files.
+Both are also applied automatically by the Husky pre-commit hook on staged files.
