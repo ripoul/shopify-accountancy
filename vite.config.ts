@@ -8,6 +8,8 @@ export default defineConfig({
       '@mui/icons-material/ArrowDownwardRounded',
       '@mui/icons-material/ArrowUpwardRounded',
       '@mui/icons-material/SearchRounded',
+      '@mui/icons-material/SettingsRounded',
+      '@mui/icons-material/SaveRounded',
     ],
   },
   test: {

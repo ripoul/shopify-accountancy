@@ -1,17 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 
 vi.mock('../../../api/stores', () => ({
   getCurrentQuarterStats: vi.fn(),
+  getTreasuryStats: vi.fn(),
+  updateStore: vi.fn(),
 }))
 
 import StatsCurrentQuarterPage from '../../../pages/store/StatsCurrentQuarterPage'
-import { getCurrentQuarterStats } from '../../../api/stores'
+import {
+  getCurrentQuarterStats,
+  getTreasuryStats,
+  updateStore,
+} from '../../../api/stores'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockGetStats = getCurrentQuarterStats as any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockGetTreasury = getTreasuryStats as any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mockUpdateStore = updateStore as any
 
 const makeStats = (currentOverrides = {}, previousOverrides = {}) => ({
   data: {
@@ -46,6 +56,18 @@ const makeStats = (currentOverrides = {}, previousOverrides = {}) => ({
   },
 })
 
+const makeTreasury = (overrides = {}) => ({
+  data: {
+    bank_amount: '800.00',
+    cash_amount: '300.00',
+    unpaid_taxes_amount: '100.00',
+    unpaid_royalties_amount: '50.00',
+    fixed_costs_reserve: '150.00',
+    investable_amount: '500.00',
+    ...overrides,
+  },
+})
+
 const renderPage = () =>
   render(
     <MemoryRouter initialEntries={['/store/1/stats/current-quarter']}>
@@ -60,6 +82,7 @@ const renderPage = () =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockGetTreasury.mockResolvedValue(makeTreasury())
 })
 
 afterEach(() => {
@@ -202,5 +225,154 @@ describe('StatsCurrentQuarterPage', () => {
       expect(screen.getByText('10')).toBeInTheDocument()
     })
     expect(screen.queryByText(/%/)).not.toBeInTheDocument()
+  })
+
+  describe('treasury section', () => {
+    it('renders the treasury cards below the existing stats', async () => {
+      mockGetStats.mockResolvedValue(makeStats())
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByText('Trésorerie')).toBeInTheDocument()
+      })
+      expect(screen.getByText('Montant en banque')).toBeInTheDocument()
+      expect(screen.getByText('Montant en caisse')).toBeInTheDocument()
+      expect(screen.getByText('Reste à investir')).toBeInTheDocument()
+      expect(screen.getByText('800,00 €')).toBeInTheDocument()
+      expect(screen.getByText('300,00 €')).toBeInTheDocument()
+      expect(screen.getByText('500,00 €')).toBeInTheDocument()
+      expect(
+        screen.queryByRole('img', { name: 'Le reste à investir est négatif' }),
+      ).not.toBeInTheDocument()
+    })
+
+    it('shows a red badge when the investable amount is negative', async () => {
+      mockGetStats.mockResolvedValue(makeStats())
+      mockGetTreasury.mockResolvedValue(
+        makeTreasury({ investable_amount: '-200.00' }),
+      )
+      renderPage()
+      await waitFor(() => {
+        expect(screen.getByText('-200,00 €')).toBeInTheDocument()
+      })
+      expect(
+        screen.getByRole('img', { name: 'Le reste à investir est négatif' }),
+      ).toBeInTheDocument()
+    })
+
+    it('shows the calculation breakdown on hover over the investable amount card', async () => {
+      mockGetStats.mockResolvedValue(makeStats())
+      renderPage()
+      const user = userEvent.setup()
+      await waitFor(() => {
+        expect(screen.getByText('Reste à investir')).toBeInTheDocument()
+      })
+
+      await user.hover(screen.getByText('Reste à investir'))
+
+      expect(await screen.findByText('Banque : 800,00 €')).toBeInTheDocument()
+      expect(
+        screen.getByText('Impôts non payés : -100,00 €'),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText('Redevances non payées : -50,00 €'),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText('Réserve charges fixes : -150,00 €'),
+      ).toBeInTheDocument()
+      expect(
+        screen.getByText('Reste à investir : 500,00 €'),
+      ).toBeInTheDocument()
+    })
+
+    it('shows an error alert when treasury stats fail to load', async () => {
+      mockGetStats.mockResolvedValue(makeStats())
+      mockGetTreasury.mockRejectedValue(new Error('network'))
+      renderPage()
+      await waitFor(() => {
+        expect(
+          screen.getByText('Impossible de charger les données de trésorerie.'),
+        ).toBeInTheDocument()
+      })
+    })
+
+    it('opens the reserve dialog prefilled with the current value', async () => {
+      mockGetStats.mockResolvedValue(makeStats())
+      renderPage()
+      const user = userEvent.setup()
+      await waitFor(() => {
+        expect(screen.getByText('Reste à investir')).toBeInTheDocument()
+      })
+
+      await user.click(
+        screen.getByRole('button', {
+          name: 'Modifier la réserve pour charges fixes',
+        }),
+      )
+
+      const dialog = await screen.findByRole('dialog')
+      expect(
+        within(dialog).getByLabelText('Réserve pour charges fixes'),
+      ).toHaveValue(150)
+    })
+
+    it('saves a new reserve value, closes the dialog and shows a success message', async () => {
+      mockGetStats.mockResolvedValue(makeStats())
+      mockUpdateStore.mockResolvedValue({})
+      renderPage()
+      const user = userEvent.setup()
+      await waitFor(() => {
+        expect(screen.getByText('Reste à investir')).toBeInTheDocument()
+      })
+
+      await user.click(
+        screen.getByRole('button', {
+          name: 'Modifier la réserve pour charges fixes',
+        }),
+      )
+      const dialog = await screen.findByRole('dialog')
+      const input = within(dialog).getByLabelText('Réserve pour charges fixes')
+      await user.clear(input)
+      await user.type(input, '2000')
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Enregistrer' }),
+      )
+
+      await waitFor(() => {
+        expect(mockUpdateStore).toHaveBeenCalledWith('1', {
+          fixed_costs_reserve: '2000',
+        })
+      })
+      await waitFor(() => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      })
+      expect(
+        await screen.findByText('Réserve mise à jour.'),
+      ).toBeInTheDocument()
+      await waitFor(() => expect(mockGetTreasury).toHaveBeenCalledTimes(2))
+    })
+
+    it('shows an error inside the dialog when saving the reserve fails', async () => {
+      mockGetStats.mockResolvedValue(makeStats())
+      mockUpdateStore.mockRejectedValue(new Error('network'))
+      renderPage()
+      const user = userEvent.setup()
+      await waitFor(() => {
+        expect(screen.getByText('Reste à investir')).toBeInTheDocument()
+      })
+
+      await user.click(
+        screen.getByRole('button', {
+          name: 'Modifier la réserve pour charges fixes',
+        }),
+      )
+      const dialog = await screen.findByRole('dialog')
+      await user.click(
+        within(dialog).getByRole('button', { name: 'Enregistrer' }),
+      )
+
+      expect(
+        await within(dialog).findByText("L'enregistrement a échoué."),
+      ).toBeInTheDocument()
+    })
   })
 })

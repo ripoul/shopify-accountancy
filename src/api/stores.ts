@@ -62,8 +62,10 @@ export const listStores = (page = 1) =>
 
 export const getStore = (storeId: string) => client.get(`/stores/${storeId}/`)
 
-export const updateStore = (storeId: string, data: { royalty_rate: string }) =>
-  client.patch(`/stores/${storeId}/`, data)
+export const updateStore = (
+  storeId: string,
+  data: Partial<{ royalty_rate: string; fixed_costs_reserve: string }>,
+) => client.patch(`/stores/${storeId}/`, data)
 
 export const getCurrentQuarterStats = (storeId: string) =>
   client.get<DashboardStats>(`/stores/${storeId}/stats/current-quarter/`)
@@ -85,3 +87,15 @@ export interface QuarterHistoryItem {
 
 export const getQuartersHistory = (storeId: string) =>
   client.get<QuarterHistoryItem[]>(`/stores/${storeId}/stats/quarters-history/`)
+
+export interface TreasuryStats {
+  bank_amount: string
+  cash_amount: string
+  unpaid_taxes_amount: string
+  unpaid_royalties_amount: string
+  fixed_costs_reserve: string
+  investable_amount: string
+}
+
+export const getTreasuryStats = (storeId: string) =>
+  client.get<TreasuryStats>(`/stores/${storeId}/stats/treasury/`)
