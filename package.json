@@ -18,14 +18,14 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^9.5.0",
     "@mui/material": "^9.5.0",
-    "@mui/x-charts": "^9.15.0",
-    "@mui/x-date-pickers": "^9.15.0",
+    "@mui/x-charts": "^9.16.0",
+    "@mui/x-date-pickers": "^9.16.0",
     "axios": "^1.20.0",
     "dayjs": "^1.11.23",
-    "i18next": "^26.4.7",
+    "i18next": "^26.5.7",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-i18next": "^17.0.20",
+    "react-i18next": "^17.1.5",
     "react-router-dom": "^7.18.4"
   },
   "pnpm": {
